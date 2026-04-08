@@ -1,0 +1,3327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PsychroFlow — Psychrometric Analysis Tool</title>
+<meta name="description" content="Professional psychrometric chart for HVAC engineers worldwide. Calculate air properties, cooling, heating, humidification and air mixing processes. Altitude-corrected via ICAO standard atmosphere.">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --white:#fff;--bg:#EDECEA;--s2:#F5F3F0;--brd:#D2CBC4;--brd2:#A89D94;
+  --sh:0 2px 10px rgba(18,20,22,0.10),0 1px 4px rgba(18,20,22,0.07);
+  --sh-sm:0 1px 4px rgba(18,20,22,0.08);
+  --sh-lg:0 10px 32px rgba(18,20,22,0.14),0 3px 10px rgba(18,20,22,0.08);
+  --pr:#0A8C7E;--pr2:#087568;--pr3:#1A3232;
+  --pp:rgba(10,140,126,0.07);--pp2:rgba(10,140,126,0.15);
+  --cool:#1A96D4;--heat:#D95010;--humid:#2270C4;
+  --evap:#1A9E6E;--hrv:#7050C8;--mix:#5840B8;
+  --grn:#0A8C7E;--grn-p:rgba(10,140,126,0.09);
+  --amb:#C07200;--amb-p:rgba(192,114,0,0.09);
+  --red:#C42A1C;--red-p:rgba(196,42,28,0.08);
+  --ink:#1A1C1E;--ink2:#2C3035;--mu:#5C6470;--mu2:#98A0AC;
+  --sans:"DM Sans",sans-serif;--serif:"Fraunces",serif;
+  --r:6px;--rl:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{font-family:var(--sans);font-size:14px;color:var(--ink);background:var(--bg);}
+body{min-height:100vh;max-width:100vw;overflow-x:hidden;}
+
+/* ── OVERLAYS ───────────────────────────────────────────────────── */
+.ov{position:fixed;inset:0;z-index:9000;background:rgba(12,20,40,0.65);backdrop-filter:blur(6px);
+    display:flex;align-items:center;justify-content:center;animation:fi 0.2s ease;}
+.ov.off{display:none;}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+
+/* Welcome modal */
+.wbox{background:var(--white);border-radius:var(--rl);box-shadow:var(--sh-lg);width:420px;overflow:hidden;
+      animation:su 0.25s cubic-bezier(0.34,1.4,0.64,1);}
+@keyframes su{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.wm-top{background:linear-gradient(140deg,var(--pr3),var(--pr));padding:26px 26px 22px;text-align:center;}
+.wm-logo{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:8px;}
+.wm-mk{width:34px;height:34px;background:rgba(255,255,255,0.18);border-radius:8px;
+       display:flex;align-items:center;justify-content:center;
+       font-family:var(--serif);font-size:15px;font-weight:700;color:white;}
+.wm-nm{font-family:var(--serif);font-size:19px;font-weight:700;color:white;}
+.wm-nm em{opacity:0.72;font-style:normal;}
+.wm-sub{font-size:12px;color:rgba(255,255,255,0.72);}
+.wm-body{padding:22px 24px 24px;}
+.wm-lbl{font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;
+        letter-spacing:0.1em;margin-bottom:11px;}
+.ug{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;}
+.uc{border:2px solid var(--brd);border-radius:var(--r);padding:14px 10px;cursor:pointer;
+    transition:all 0.15s;text-align:center;background:var(--s2);}
+.uc:hover{border-color:var(--pr);background:var(--pp);}
+.uc.on{border-color:var(--pr);background:var(--pp2);}
+.uc-ic{font-size:20px;margin-bottom:5px;}
+.uc-t{font-size:13px;font-weight:700;color:var(--ink);display:block;margin-bottom:2px;}
+.uc.on .uc-t{color:var(--pr);}
+.uc-s{font-size:10px;color:var(--mu);}
+.wm-btn{width:100%;height:42px;background:var(--pr);color:white;border:none;
+        border-radius:var(--r);font-family:var(--sans);font-size:13px;font-weight:600;
+        cursor:pointer;transition:all 0.15s;
+        display:flex;align-items:center;justify-content:center;gap:8px;
+        box-shadow:0 2px 8px rgba(10,140,126,0.28);}
+.wm-btn:hover{background:var(--pr2);transform:translateY(-1px);}
+
+/* Quick-start wizard */
+.qbox{background:var(--white);border-radius:var(--rl);box-shadow:var(--sh-lg);
+      width:500px;overflow:hidden;}
+.qbox-hdr{background:linear-gradient(135deg,var(--pr3),var(--pr));
+          padding:20px 24px;display:flex;align-items:center;justify-content:space-between;}
+.qbox-title{font-family:var(--serif);font-size:17px;font-weight:700;color:white;}
+.qbox-close{background:none;border:none;color:rgba(255,255,255,0.7);
+             font-size:20px;cursor:pointer;line-height:1;}
+.qbox-close:hover{color:white;}
+.qbox-body{padding:22px 24px 24px;}
+.q-steps{display:flex;gap:4px;margin-bottom:20px;}
+.q-step{flex:1;height:3px;border-radius:2px;background:var(--brd);transition:background 0.3s;}
+.q-step.done{background:var(--pr);}
+.q-step-lbl{font-size:10px;font-weight:600;color:var(--mu);text-transform:uppercase;
+             letter-spacing:0.08em;margin-bottom:12px;}
+.q-nav{display:flex;gap:8px;margin-top:18px;}
+.q-btn{flex:1;height:38px;border-radius:var(--r);border:none;font-family:var(--sans);
+       font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;
+       display:flex;align-items:center;justify-content:center;gap:6px;}
+.q-btn-p{background:var(--pr);color:white;}
+.q-btn-p:hover{background:var(--pr2);}
+.q-btn-o{background:var(--s2);color:var(--mu);border:1.5px solid var(--brd);}
+.q-btn-o:hover{border-color:var(--brd2);color:var(--ink);}
+
+/* Chart settings */
+.csbox{background:var(--white);border-radius:var(--rl);box-shadow:var(--sh-lg);width:380px;overflow:hidden;}
+.cs-hdr{display:flex;align-items:center;justify-content:space-between;
+        padding:13px 17px;border-bottom:1px solid var(--brd);background:var(--s2);}
+.cs-title{font-size:14px;font-weight:700;color:var(--ink);}
+.cs-x{background:none;border:none;font-size:18px;color:var(--mu);cursor:pointer;line-height:1;}
+.cs-x:hover{color:var(--red);}
+.cs-body{padding:17px;}
+
+/* ── NAV ────────────────────────────────────────────────────────── */
+nav{background:#111416;
+    position:sticky;top:0;z-index:100;
+    box-shadow:0 3px 14px rgba(0,0,0,0.40),0 1px 4px rgba(0,0,0,0.22);}
+.nav-i{display:flex;align-items:center;justify-content:space-between;
+       padding:0 22px;height:64px;}
+.nav-l{display:flex;align-items:center;gap:14px;}
+.nlogo{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.nmk{width:38px;height:38px;
+     background:linear-gradient(135deg,#0A8C7E,#065C54);
+     border-radius:9px;display:flex;align-items:center;justify-content:center;
+     font-family:var(--serif);font-size:14px;font-weight:700;color:white;
+     box-shadow:0 2px 8px rgba(0,0,0,0.28),inset 0 1px 0 rgba(255,255,255,0.18);}
+.nbrand{font-family:var(--serif);font-size:22px;font-weight:700;color:white;
+        letter-spacing:-0.02em;text-shadow:0 1px 3px rgba(0,0,0,0.2);}
+.nbrand em{color:#2ECFBE;font-style:normal;}
+.nsep{width:1px;height:22px;background:rgba(255,255,255,0.18);margin:0 4px;}
+.nmod{font-size:13px;font-weight:500;color:rgba(255,255,255,0.78);
+      display:flex;align-items:center;gap:6px;letter-spacing:0.01em;}
+.npulse{width:7px;height:7px;background:#2ECFBE;border-radius:50%;
+        box-shadow:0 0 0 0 rgba(46,207,190,0.5);
+        animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);box-shadow:0 0 0 0 rgba(46,207,190,0.5)}
+                 50%{opacity:0.8;transform:scale(1.25);box-shadow:0 0 0 4px rgba(46,207,190,0)}}
+.nav-r{display:flex;align-items:center;gap:10px;}
+.s-chip{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;
+        color:rgba(255,255,255,0.55);}
+.s-dot{width:6px;height:6px;border-radius:50%;background:#2ECFBE;}
+.s-dot.sv{background:var(--amb);animation:pulse 0.8s infinite;}
+.upill{font-size:11px;font-weight:700;color:white;
+       background:rgba(255,255,255,0.15);
+       border:1px solid rgba(255,255,255,0.28);
+       padding:5px 11px;border-radius:5px;cursor:pointer;
+       transition:all 0.15s;}
+.upill:hover{background:rgba(255,255,255,0.22);}
+.nb{height:34px;padding:0 16px;border-radius:7px;font-family:var(--sans);font-size:13px;
+    font-weight:600;cursor:pointer;transition:all 0.15s;
+    display:flex;align-items:center;gap:6px;}
+.nb-g{background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.22);
+      color:rgba(255,255,255,0.85);}
+.nb-g:hover{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.38);color:white;}
+.nb-p{background:linear-gradient(135deg,#0A8C7E,#087568);
+      border:1px solid rgba(255,255,255,0.12);color:white;
+      box-shadow:0 2px 8px rgba(10,140,126,0.40);}
+.nb-p:hover{background:linear-gradient(135deg,#0D9E8E,#0A8C7E);
+            transform:translateY(-1px);box-shadow:0 4px 12px rgba(10,140,126,0.50);}
+
+/* TABS */
+.tabs{display:flex;padding:0 22px;
+      border-bottom:2px solid var(--brd);
+      background:var(--white);
+      box-shadow:0 2px 6px rgba(6,30,24,0.06);}
+.tb{padding:12px 18px 11px;border:none;background:transparent;font-family:var(--sans);
+    font-size:13px;font-weight:500;color:var(--mu);cursor:pointer;
+    border-bottom:3px solid transparent;transition:all 0.15s;margin-bottom:-2px;
+    display:flex;align-items:center;gap:6px;white-space:nowrap;}
+.tb:hover{color:var(--ink2);background:var(--pp);}
+.tb.on{color:var(--pr);border-bottom-color:var(--pr);font-weight:700;}
+.pg{display:none;}.pg.on{display:block;}
+
+/* ── CHART PAGE ─────────────────────────────────────────────────── */
+/* KEY: whole page layout — NO fixed viewport, page scrolls naturally */
+.chart-page{}
+
+.chart-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 420px;
+  align-items:start;
+  background:var(--bg);
+  padding:6px 12px 0 14px;
+  gap:10px;
+}
+
+.chart-col{display:flex;flex-direction:column;gap:6px;min-width:0;overflow:hidden;}
+.chart-topbar{display:flex;align-items:flex-start;justify-content:space-between;}
+.chart-title{font-family:var(--serif);font-size:21px;font-weight:700;color:var(--ink);}
+.chart-meta{display:flex;align-items:center;gap:10px;margin-top:3px;}
+.cm-item{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--mu);}
+.cm-dot{width:5px;height:5px;border-radius:50%;}
+
+/* Chart frame — fixed height so it doesn't jump */
+.chart-frame{
+  position:relative;
+  background:var(--white);
+  border:1.5px solid var(--brd2);
+  border-radius:var(--rl);
+  box-shadow:0 4px 20px rgba(6,30,24,0.13),0 1px 5px rgba(6,30,24,0.08),
+             inset 0 0 0 1px rgba(255,255,255,0.8);
+  overflow:hidden;
+  height:calc(100vh - 152px);
+  min-height:380px;
+  max-height:680px;
+}
+#psychroCanvas{display:block;width:100%;height:100%;cursor:default;image-rendering:crisp-edges;}
+
+/* Floating toolbar bottom-left */
+.cft{position:absolute;bottom:10px;left:10px;display:flex;align-items:center;gap:3px;
+     background:rgba(255,255,255,0.96);backdrop-filter:blur(8px);
+     border:1px solid var(--brd);border-radius:var(--r);padding:4px;box-shadow:var(--sh-sm);}
+.cft-b{width:28px;height:28px;border-radius:5px;border:none;background:transparent;
+       color:var(--mu);cursor:pointer;transition:all 0.15s;
+       display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+.cft-b:hover{background:var(--s2);color:var(--ink);}
+.cft-b.on{background:var(--pp2);color:var(--pr);}
+.cft-sep{width:1px;height:16px;background:var(--brd);margin:0 1px;}
+
+/* Hover tooltip */
+.tip{position:absolute;background:rgba(255,255,255,0.97);border:1px solid var(--brd);
+     border-radius:var(--r);padding:8px 10px;box-shadow:var(--sh);
+     pointer-events:none;opacity:0;transition:opacity 0.1s;min-width:155px;z-index:30;}
+.tip.on{opacity:1;}
+.tip-ttl{font-size:9px;font-weight:700;color:var(--pr);text-transform:uppercase;
+         letter-spacing:0.08em;margin-bottom:5px;}
+.tip-r{display:flex;justify-content:space-between;gap:10px;margin-bottom:2px;}
+.tip-n{font-size:10px;color:var(--mu);}
+.tip-v{font-size:10px;font-weight:600;color:var(--ink);}
+
+.chart-status{height:20px;display:flex;align-items:center;justify-content:space-between;padding:0 4px;}
+.st-txt{font-size:11px;color:var(--mu2);}
+.st-r{display:flex;gap:12px;}
+.st-chip{font-size:9px;font-weight:500;color:var(--mu2);}
+
+.chart-empty{position:absolute;inset:0;display:flex;flex-direction:column;
+             align-items:center;justify-content:center;pointer-events:none;opacity:0.5;}
+.ce-ic{font-size:36px;margin-bottom:10px;opacity:0.35;}
+.ce-t{font-size:12px;color:var(--mu);text-align:center;line-height:1.6;}
+
+/* ── SIDEBAR (RIGHT COLUMN) ─────────────────────────────────────── */
+/* NO overflow:hidden, NO fixed height — sidebar grows with content */
+.sidebar{
+  background:var(--white);
+  border:1.5px solid var(--brd);
+  border-radius:var(--rl);
+  box-shadow:0 4px 18px rgba(6,30,24,0.10),0 1px 4px rgba(6,30,24,0.07),
+             inset 0 0 0 1px rgba(255,255,255,0.9);
+  overflow:visible;  /* CRITICAL — not scrollable, grows naturally */
+}
+
+.sb-hdr{padding:14px 18px 13px;
+        background:linear-gradient(135deg,#0D1010,#1A3232);
+        border-radius:var(--rl) var(--rl) 0 0;
+        box-shadow:inset 0 -1px 0 rgba(0,0,0,0.12);}
+.sb-htitle{font-size:9.5px;font-weight:700;color:rgba(255,255,255,0.6);
+           text-transform:uppercase;letter-spacing:0.14em;}
+.sb-hsub{font-size:14px;font-weight:700;color:white;margin-top:2px;letter-spacing:-0.01em;}
+
+/* Each section in the sidebar */
+.sb-sec{padding:12px 14px;border-bottom:1px solid var(--brd);}
+.sb-sec:last-child{border-bottom:none;}
+.sb-sec-title{font-size:11px;font-weight:800;color:var(--pr);text-transform:uppercase;
+              letter-spacing:0.12em;margin-bottom:12px;
+              display:flex;align-items:center;gap:6px;}
+.sb-sec-title::after{content:"";flex:1;height:1.5px;background:var(--brd);}
+
+/* Process block inside sidebar */
+.proc-block{border:1.5px solid var(--brd);border-radius:var(--r);overflow:hidden;margin-bottom:10px;box-shadow:0 2px 8px rgba(18,20,22,0.08);}
+.proc-block:last-of-type{margin-bottom:0;}
+.pb-hdr{display:flex;align-items:center;gap:9px;padding:11px 13px;
+        background:var(--s2);border-bottom:1.5px solid var(--brd);
+        cursor:pointer;transition:background 0.12s;}
+.pb-hdr:hover{background:var(--bg);}
+.pb-num{width:24px;height:24px;border-radius:50%;background:var(--pr);color:white;
+        font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+        box-shadow:0 2px 6px rgba(10,140,126,0.35);}
+.pb-info{flex:1;}
+.pb-title{font-size:14px;font-weight:800;color:var(--ink);letter-spacing:-0.01em;}
+.pb-sub{font-size:12px;font-weight:500;color:var(--mu);margin-top:2px;}
+.pb-del{background:none;border:none;color:var(--mu2);cursor:pointer;font-size:14px;
+        transition:color 0.15s;padding:0;line-height:1;}
+.pb-del:hover{color:var(--red);}
+.pb-body{padding:13px 13px 11px;}
+
+/* Process type buttons — compact 4-column grid inside sidebar */
+.pt-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:9px 0;}
+.pt-btn{display:flex;flex-direction:column;align-items:center;padding:8px 3px 7px;
+        border:1.5px solid var(--brd);border-radius:var(--r);background:var(--white);
+        cursor:pointer;transition:all 0.15s;}
+.pt-btn:hover{border-color:var(--brd2);transform:translateY(-1px);box-shadow:var(--sh-sm);}
+.pt-btn.on{border-color:var(--pc,var(--pr));background:rgba(var(--prgb,11,94,168),0.07);}
+.pt-ic{font-size:17px;margin-bottom:3px;line-height:1;transition:transform 0.15s;}
+.pt-btn:hover .pt-ic{transform:scale(1.12);}
+.pt-lb{font-size:10px;font-weight:700;color:var(--ink);text-align:center;line-height:1.2;}
+.pt-btn.on .pt-lb{color:var(--pc,var(--pr));}
+
+/* Process params inside block */
+.pp-sec{margin-top:8px;}
+
+/* Add process button at bottom of sidebar processes */
+.add-proc-btn{width:100%;height:40px;background:var(--pr);color:white;
+              border:2px solid var(--pr);border-radius:var(--r);
+              font-family:var(--sans);font-size:13px;font-weight:700;
+              cursor:pointer;transition:all 0.15s;margin-top:12px;
+              display:flex;align-items:center;justify-content:center;gap:7px;
+              box-shadow:0 3px 10px rgba(10,140,126,0.32);letter-spacing:0.01em;}
+.add-proc-btn:hover{background:var(--pr2);transform:translateY(-1px);box-shadow:0 5px 14px rgba(10,140,126,0.40);}
+
+/* ── RESULTS SECTION (full-width below chart+sidebar) ───────────── */
+.results-section{
+  padding:8px 0 0;
+  background:transparent;
+}
+.rs-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.rs-title{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--ink);}
+.rs-sub{font-size:11px;color:var(--mu);margin-top:2px;}
+
+/* Results tables */
+.res-wrap{background:var(--white);
+          border:1.5px solid var(--brd);
+          border-radius:var(--rl);
+          overflow:hidden;
+          box-shadow:0 3px 14px rgba(18,20,22,0.09),0 1px 4px rgba(18,20,22,0.06);
+          margin-bottom:12px;}
+.res-wrap-title{padding:11px 18px;
+                background:linear-gradient(90deg,var(--pr3) 0%,var(--pr2) 100%);
+                color:white;font-size:12px;font-weight:700;letter-spacing:0.10em;
+                text-transform:uppercase;
+                border-bottom:2px solid rgba(255,255,255,0.10);}
+.res-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.res-tbl thead tr{background:var(--s2);border-bottom:2px solid var(--brd2);}
+.res-tbl th{padding:9px 12px;text-align:left;
+            font-size:10px;font-weight:700;color:var(--pr3);
+            letter-spacing:0.06em;text-transform:uppercase;
+            border-right:1px solid var(--brd);}
+.res-tbl th:last-child{border-right:none;}
+.res-tbl td{padding:8px 12px;
+            border-bottom:1px solid var(--brd);
+            border-right:1px solid rgba(208,216,230,0.5);
+            color:var(--ink2);font-size:12px;}
+.res-tbl td:last-child{border-right:none;}
+.res-tbl td:first-child{font-weight:700;color:var(--ink);
+                        background:rgba(10,140,126,0.04);
+                        border-left:3px solid var(--pr);}
+.res-tbl tr:hover td{background:rgba(10,140,126,0.05);}
+.res-tbl tr:last-child td{border-bottom:none;}
+.res-tbl tr:nth-child(even) td{background:rgba(240,243,248,0.6);}
+.res-tbl tr:nth-child(even) td:first-child{background:rgba(10,140,126,0.07);}
+.pt-badge{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--ink);}
+.pt-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;
+        box-shadow:0 0 0 2px rgba(255,255,255,0.9),0 0 0 3px rgba(0,0,0,0.12);}
+.process-badge{display:inline-flex;align-items:center;gap:6px;}
+.proc-color-bar{width:10px;height:10px;border-radius:3px;flex-shrink:0;}
+.val-hi{font-weight:700;color:var(--pr);}
+.val-up{color:var(--heat);font-weight:600;}
+.val-dn{color:var(--cool);font-weight:600;}
+.res-empty{padding:32px;text-align:center;color:var(--mu2);font-size:12px;}
+
+/* ── ABOUT SECTION ──────────────────────────────────────────────── */
+.about-section{
+  background:var(--white);
+  border-top:1px solid var(--brd);
+  padding:40px 20px 48px;
+}
+.about-inner{max-width:1100px;margin:0 auto;}
+.about-badge{display:inline-block;font-size:9px;font-weight:700;color:var(--pr);
+             text-transform:uppercase;letter-spacing:0.12em;
+             background:var(--pp2);padding:4px 10px;border-radius:20px;margin-bottom:12px;}
+.about-h1{font-family:var(--serif);font-size:28px;font-weight:700;color:var(--ink);
+          margin-bottom:8px;letter-spacing:-0.3px;}
+.about-intro{font-size:16px;color:var(--mu);line-height:1.85;max-width:680px;margin-bottom:36px;}
+.about-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:36px;}
+.about-card{background:var(--s2);border:1px solid var(--brd);border-radius:var(--rl);
+            padding:20px;transition:box-shadow 0.15s;}
+.about-card:hover{box-shadow:var(--sh);}
+.about-card-ic{font-size:28px;margin-bottom:10px;}
+.about-card-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.about-card-text{font-size:13px;color:var(--mu);line-height:1.7;}
+.about-props{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:36px;}
+.ap{background:var(--s2);border:1px solid var(--brd);border-radius:var(--r);
+    padding:12px;border-left:3px solid var(--pr);}
+.ap-sym{font-family:var(--serif);font-size:16px;font-weight:700;color:var(--pr);margin-bottom:4px;}
+.ap-name{font-size:11px;font-weight:600;color:var(--ink);margin-bottom:2px;}
+.ap-unit{font-size:9px;color:var(--mu);margin-bottom:4px;}
+.ap-desc{font-size:10px;color:var(--mu);line-height:1.5;}
+.about-proc{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.apc{background:var(--s2);border:1px solid var(--brd);border-radius:var(--r);padding:14px;}
+.apc-ic{font-size:20px;margin-bottom:6px;}
+.apc-title{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.apc-desc{font-size:10px;color:var(--mu);line-height:1.6;}
+
+/* ── FORMS ──────────────────────────────────────────────────────── */
+.fg{margin-bottom:8px;}.fg:last-child{margin-bottom:0;}
+.fl{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:4px;}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+input,select{width:100%;height:30px;padding:0 9px;background:var(--white);
+             border:1.5px solid var(--brd);border-radius:6px;
+             font-family:var(--sans);font-size:13px;color:var(--ink);
+             outline:none;transition:border-color 0.15s,box-shadow 0.15s;}
+input:focus,select:focus{border-color:var(--pr);box-shadow:0 0 0 3px var(--pp);}
+select{cursor:pointer;}
+.iu{display:flex;}
+.iu input{border-right:none;border-radius:6px 0 0 6px;}
+.utag{display:flex;align-items:center;padding:0 8px;background:var(--s2);
+      border:1.5px solid var(--brd);border-radius:0 6px 6px 0;
+      font-size:12px;font-weight:600;color:var(--mu);white-space:nowrap;flex-shrink:0;}
+.utog{display:flex;align-items:center;padding:0 8px;background:var(--pp2);
+      border:1.5px solid var(--brd);border-left:none;border-radius:0 6px 6px 0;
+      font-size:12px;font-weight:700;color:var(--pr);white-space:nowrap;flex-shrink:0;
+      cursor:pointer;user-select:none;}
+.utog:hover{border-color:var(--pr);}
+.sdiv{font-size:11px;font-weight:700;color:var(--mu);text-transform:uppercase;
+      letter-spacing:0.1em;margin:8px 0 6px;display:flex;align-items:center;gap:5px;}
+.sdiv::after{content:"";flex:1;height:1px;background:var(--brd);}
+.btn{height:36px;padding:0 16px;border-radius:6px;font-family:var(--sans);
+     font-size:13px;font-weight:700;cursor:pointer;transition:all 0.15s;border:none;
+     display:flex;align-items:center;justify-content:center;gap:5px;}
+.btn-f{width:100%;margin-top:7px;}
+.btn-p{background:var(--pr);color:white;}
+.btn-p:hover{background:var(--pr2);transform:translateY(-1px);}
+.btn-o{background:white;color:var(--mu);border:1.5px solid var(--brd);}
+.btn-o:hover{border-color:var(--pr);color:var(--pr);background:var(--pp);}
+.btn-sm{height:27px;font-size:10px;padding:0 10px;}
+.al{padding:6px 9px;border-radius:5px;font-size:10px;line-height:1.5;
+    display:flex;gap:6px;margin-bottom:7px;border:1px solid;}
+.al-i{background:var(--pp);color:var(--ink2);border-color:rgba(10,140,126,0.18);}
+.al-o{background:var(--grn-p);color:#064E3B;border-color:rgba(5,150,105,0.18);}
+.al-w{background:var(--amb-p);color:#78350F;border-color:rgba(217,119,6,0.20);}
+.tog-row{display:flex;align-items:center;justify-content:space-between;
+         padding:7px 0;border-bottom:1px solid var(--brd);}
+.tog-row:last-child{border-bottom:none;}
+.tog-lbl{font-size:12px;color:var(--ink);}
+.tpill{width:36px;height:20px;border-radius:10px;background:var(--brd);
+       position:relative;cursor:pointer;transition:background 0.2s;
+       flex-shrink:0;border:none;}
+.tpill.on{background:var(--pr);}
+.tpill::after{content:"";position:absolute;width:14px;height:14px;background:white;
+              border-radius:50%;top:3px;left:3px;transition:left 0.2s;
+              box-shadow:0 1px 3px rgba(0,0,0,0.18);}
+.tpill.on::after{left:19px;}
+
+/* ── CONTENT PAGES ──────────────────────────────────────────────── */
+.cp{max-width:880px;margin:0 auto;padding:32px 24px;}
+.cp-h1{font-family:var(--serif);font-size:26px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.cp-intro{font-size:13px;color:var(--mu);line-height:1.7;margin-bottom:28px;}
+.cp-h2{font-family:var(--serif);font-size:18px;font-weight:600;color:var(--ink);
+       margin-bottom:8px;margin-top:28px;}
+.cp-p{font-size:13px;color:var(--ink2);line-height:1.75;margin-bottom:12px;}
+.cp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0;}
+.cp-card{background:var(--white);border:1px solid var(--brd);border-radius:var(--r);
+         padding:16px;box-shadow:var(--sh-sm);}
+.cp-card-ic{font-size:22px;margin-bottom:8px;}
+.cp-card-t{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:5px;}
+.cp-card-d{font-size:11px;color:var(--mu);line-height:1.6;}
+.ptbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:12px;}
+.ptbl th{background:var(--pr3);color:white;padding:8px 10px;text-align:left;font-size:11px;font-weight:600;}
+.ptbl td{padding:7px 10px;border-bottom:1px solid var(--brd);color:var(--ink2);}
+.ptbl td:first-child{font-weight:600;color:var(--pr);}
+.sl{display:flex;flex-direction:column;gap:13px;margin:16px 0;}
+.si{display:flex;gap:13px;background:var(--white);border:1px solid var(--brd);
+    border-radius:var(--r);padding:14px;box-shadow:var(--sh-sm);}
+.sc{width:30px;height:30px;border-radius:50%;background:var(--pr);color:white;
+    font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.s-t{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.s-d{font-size:12px;color:var(--mu);line-height:1.65;}
+
+/* ── REPORT PAGE ────────────────────────────────────────────────── */
+.rp{max-width:640px;margin:0 auto;padding:32px 24px;}
+.rcard{background:var(--white);border:1px solid var(--brd);border-radius:var(--rl);
+       padding:24px;box-shadow:var(--sh);}
+.rcard-t{font-family:var(--serif);font-size:20px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.rcard-s{font-size:12px;color:var(--mu);margin-bottom:20px;}
+.rgen{width:100%;height:44px;background:var(--pr);color:white;border:none;
+      border-radius:var(--r);font-family:var(--sans);font-size:14px;font-weight:600;
+      cursor:pointer;transition:all 0.15s;
+      display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px;}
+.rgen:hover{background:var(--pr2);transform:translateY(-1px);}
+
+/* ── SETTINGS ───────────────────────────────────────────────────── */
+.sp{max-width:580px;margin:0 auto;padding:32px 24px;}
+.scard{background:var(--white);border:1px solid var(--brd);border-radius:var(--rl);
+       padding:20px;margin-bottom:14px;box-shadow:var(--sh-sm);}
+.scard-t{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:14px;
+         padding-bottom:10px;border-bottom:1px solid var(--brd);}
+
+/* ── FOOTER ─────────────────────────────────────────────────────── */
+footer{background:var(--ink);color:rgba(255,255,255,0.55);
+       padding:20px 24px;text-align:center;font-size:11px;line-height:1.8;}
+footer a{color:rgba(255,255,255,0.55);text-decoration:none;transition:color 0.15s;}
+footer a:hover{color:white;}
+footer .footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;}
+
+/* TOAST */
+.toast{position:fixed;bottom:18px;right:18px;background:var(--ink);color:white;
+       font-size:11px;font-weight:500;padding:9px 14px;border-radius:7px;z-index:300;
+       transform:translateY(60px);transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+       box-shadow:0 4px 16px rgba(0,0,0,0.18);display:flex;align-items:center;gap:7px;}
+.toast.on{transform:translateY(0);}
+
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:var(--s2);}
+::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px;}
+
+/* ── COLLAPSIBLE PROCESS BLOCKS ─────────────────────────────── */
+.proc-block.collapsed .pb-body{display:none;}
+.proc-block.collapsed .pb-hdr{cursor:pointer;}
+.proc-block.collapsed .pb-hdr:hover{background:rgba(10,140,126,0.06);}
+.pb-color-strip{width:4px;border-radius:2px;align-self:stretch;flex-shrink:0;
+                background:var(--brd);transition:background 0.2s;}
+.pb-route{font-size:11px;font-weight:600;color:var(--pr);white-space:nowrap;flex-shrink:0;padding:0 4px;}
+.pb-chevron{font-size:10px;color:var(--mu2);flex-shrink:0;transition:transform 0.2s;
+            display:flex;align-items:center;padding:0 2px;cursor:pointer;}
+.proc-block:not(.collapsed) .pb-chevron{transform:rotate(0deg);}
+.proc-block.collapsed .pb-chevron{transform:rotate(-90deg);}
+
+/* ── THEORY PAGE ────────────────────────────────────────────────────────── */
+.theory-page{max-width:1100px;margin:0 auto;padding:40px 24px 60px;}
+.theory-hero{margin-bottom:48px;padding-bottom:32px;border-bottom:2px solid var(--brd);}
+.th-badge{display:inline-block;font-size:10px;font-weight:700;color:var(--pr);
+          text-transform:uppercase;letter-spacing:0.14em;
+          background:var(--pp2);padding:4px 12px;border-radius:20px;margin-bottom:16px;}
+.th-h1{font-family:var(--serif);font-size:36px;font-weight:700;color:var(--ink);
+       line-height:1.15;letter-spacing:-0.5px;margin-bottom:16px;}
+.th-lead{font-size:17px;color:var(--mu);line-height:1.80;max-width:760px;}
+.th-h2{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:14px;
+       display:flex;align-items:center;gap:10px;}
+.th-h2-num{display:inline-flex;align-items:center;justify-content:center;
+           width:26px;height:26px;background:var(--pr);color:white;
+           border-radius:50%;font-size:11px;font-weight:700;flex-shrink:0;}
+.th-p{font-size:14.5px;color:var(--mu);line-height:1.80;margin-bottom:14px;}
+.th-p-sm{font-size:13px;}
+.th-formula{
+  background:var(--s2);border-left:3px solid var(--pr);
+  padding:10px 16px;margin:12px 0;border-radius:0 6px 6px 0;
+  font-family:"Courier New",monospace;font-size:13px;color:var(--ink2);
+  letter-spacing:0.02em;
+}
+.th-list{list-style:none;padding:0;margin:0;}
+.th-list li{font-size:14px;color:var(--mu);line-height:1.7;padding:5px 0 5px 22px;
+            position:relative;border-bottom:1px solid var(--brd);}
+.th-list li:last-child{border-bottom:none;}
+.th-list li::before{content:"→";position:absolute;left:0;color:var(--pr);font-weight:700;}
+.th-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:40px;}
+.th-section{margin-bottom:40px;}
+.th-full{grid-column:1/-1;}
+.th-callout{background:var(--s2);border-radius:var(--rl);padding:28px 28px 20px;
+            border:1px solid var(--brd);}
+
+/* Property cards */
+.th-prop-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px;}
+.th-prop-card{background:var(--white);border:1px solid var(--brd);border-radius:var(--rl);
+              padding:16px;border-top:3px solid var(--pr);
+              box-shadow:var(--sh-sm);transition:box-shadow 0.15s;}
+.th-prop-card:hover{box-shadow:var(--sh);}
+.th-prop-sym{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--pr);
+             margin-bottom:4px;}
+.th-prop-name{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.th-prop-unit{font-size:10px;font-weight:600;color:var(--mu);margin-bottom:8px;
+              text-transform:uppercase;letter-spacing:0.07em;}
+.th-prop-desc{font-size:12px;color:var(--mu);line-height:1.65;margin:0;}
+
+/* Process cards */
+.th-proc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px;}
+.th-proc-card{background:var(--white);border:1px solid var(--brd);border-radius:var(--rl);
+              padding:18px;box-shadow:var(--sh-sm);transition:box-shadow 0.15s;}
+.th-proc-card:hover{box-shadow:var(--sh);}
+.th-proc-ic{font-size:24px;margin-bottom:8px;}
+.th-proc-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.th-proc-desc{font-size:12.5px;color:var(--mu);line-height:1.70;margin:0;}
+
+/* Standard cards */
+.th-std-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px;}
+.th-std-card{background:var(--white);border:1px solid var(--brd);border-radius:var(--rl);
+             padding:16px;box-shadow:var(--sh-sm);}
+.th-std-name{font-size:16px;font-weight:800;color:var(--pr);margin-bottom:4px;font-family:var(--serif);}
+.th-std-title{font-size:11px;font-weight:700;color:var(--ink);margin-bottom:8px;line-height:1.4;}
+.th-std-desc{font-size:12px;color:var(--mu);line-height:1.65;margin:0;}
+
+@media(max-width:900px){
+  .th-grid-2{grid-template-columns:1fr;}
+  .th-prop-grid{grid-template-columns:repeat(2,1fr);}
+  .th-proc-grid{grid-template-columns:repeat(2,1fr);}
+  .th-std-grid{grid-template-columns:repeat(2,1fr);}
+  .th-h1{font-size:26px;}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   MOBILE — 768px and below
+   Layout: Sidebar (inputs) FIRST → Chart BELOW → Results
+   Matches PsychroSim mobile UX pattern
+   ═══════════════════════════════════════════════════════════ */
+@media(max-width:768px){
+
+  /* ── NAV ───────────────────────────────────────────── */
+  nav{position:sticky;top:0;z-index:200;}
+  .nav-i{height:auto;padding:10px 14px;flex-wrap:nowrap;gap:8px;}
+  .nsep,.nmod,.s-chip,
+  .nb-g[onclick*="howto"],
+  .nb-g[onclick*="settings"],
+  .nb-g[onclick*="clearAll"]{display:none;}
+  .nbrand{font-size:15px;}
+  .nav-r{gap:7px;}
+  .nb-p{height:34px;padding:0 12px;font-size:12px;}
+
+  /* Tabs — horizontal scroll */
+  .tabs{padding:0 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;gap:0;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tb{font-size:12px;font-weight:600;padding:10px 14px 9px;white-space:nowrap;flex-shrink:0;}
+
+  /* ── CHART LAYOUT — sidebar on TOP, chart BELOW ──── */
+  .chart-layout{display:flex;flex-direction:column;padding:8px 10px 0;gap:10px;width:100%;max-width:100%;overflow:hidden;box-sizing:border-box;}
+  .sidebar{order:1;width:100%;}
+  .chart-col{order:2;}
+
+  /* ── SIDEBAR ────────────────────────────────────── */
+  .sidebar{border-radius:var(--r);}
+  .sb-hdr{border-radius:var(--r) var(--r) 0 0;padding:14px 16px 12px;}
+  .sb-htitle{font-size:10px;letter-spacing:0.14em;}
+  .sb-hsub{font-size:15px;}
+  .sb-sec{padding:14px 16px;}
+  .sb-sec-title{font-size:12px;letter-spacing:0.10em;margin-bottom:14px;}
+
+  /* ── FORMS — large touch targets, no iOS zoom (16px) ── */
+  .fl{font-size:14px;font-weight:700;margin-bottom:6px;}
+  input,select{height:46px;font-size:16px;padding:0 12px;border-radius:8px;}
+  .utag{font-size:13px;font-weight:700;padding:0 11px;}
+  .utog{font-size:13px;font-weight:700;padding:0 11px;}
+  .sdiv{font-size:12px;letter-spacing:0.09em;margin:12px 0 8px;}
+  .al{font-size:11px;padding:8px 10px;}
+
+  /* Buttons */
+  .btn{height:46px;font-size:15px;font-weight:700;border-radius:8px;}
+  .add-proc-btn{height:48px;font-size:15px;font-weight:800;margin-top:14px;border-radius:8px;}
+
+  /* ── PROCESS BLOCKS ─────────────────────────────── */
+  .proc-block{margin-bottom:12px;}
+  .pb-hdr{padding:13px 14px;}
+  .pb-num{width:28px;height:28px;font-size:13px;}
+  .pb-title{font-size:15px;font-weight:800;}
+  .pb-sub{font-size:12px;}
+  .pb-body{padding:14px;}
+  .pt-grid{gap:6px;margin:10px 0;}
+  .pt-btn{padding:10px 3px 9px;}
+  .pt-ic{font-size:20px;margin-bottom:4px;}
+  .pt-lb{font-size:10px;font-weight:700;}
+
+  /* ── CHART — full-width, aspect-ratio controlled ── */
+  .chart-frame{
+    width:100%;
+    height:auto;
+    aspect-ratio:4/3;
+    min-height:260px;
+    max-height:480px;
+    border-radius:var(--r);
+    overflow:hidden;
+  }
+  /* Ensure chart-col never overflows viewport */
+  .chart-col{
+    width:100%;
+    max-width:100vw;
+    overflow:hidden;
+  }
+  /* Clip results section too */
+  .results-section{
+    width:100%;
+    max-width:100%;
+    overflow:hidden;
+  }
+  .chart-status{height:22px;}
+  .st-txt{font-size:11px;}
+
+  /* Floating toolbar — move to bottom-left, compact, no overlap */
+  .cft{
+    position:absolute;
+    bottom:6px;
+    left:6px;
+    right:auto;
+    top:auto;
+    padding:3px;
+    gap:2px;
+    background:rgba(255,255,255,0.94);
+    border-radius:6px;
+    box-shadow:0 1px 6px rgba(0,0,0,0.15);
+    z-index:10;
+  }
+  .cft-b{width:32px;height:32px;font-size:12px;font-weight:800;border-radius:4px;}
+  .cft-sep{height:12px;}
+
+  /* ── RESULTS ─────────────────────────────────── */
+  .rs-title{font-size:18px;}
+  .rs-sub{font-size:12px;}
+  .res-wrap-title{font-size:12px;padding:10px 14px;}
+  .res-tbl{font-size:12px;}
+  .res-tbl th{font-size:10px;padding:8px 10px;}
+  .res-tbl td{font-size:12px;padding:7px 10px;}
+
+  /* ── ABOUT ───────────────────────────────────── */
+  .about-section{padding:28px 16px 36px;}
+  .about-h1{font-size:24px;}
+  .about-intro{font-size:15px;}
+  .about-grid{grid-template-columns:1fr 1fr;}
+  .about-card{padding:16px;}
+  .about-card-title{font-size:14px;}
+  .about-card-text{font-size:13px;}
+  .about-props{grid-template-columns:1fr 1fr;}
+  .about-proc{grid-template-columns:1fr;}
+  .apc-title{font-size:13px;}
+  .apc-desc{font-size:12px;}
+
+  /* ── CONTENT PAGES ───────────────────────────── */
+  .cp{padding:20px 16px;}
+  .cp-h1{font-size:22px;}
+  .cp-p{font-size:14px;}
+  .cp-grid{grid-template-columns:1fr;}
+  .rp,.sp{padding:20px 14px;}
+  .rcard{padding:18px;}
+  .rcard-t{font-size:18px;}
+  .rgen{height:48px;font-size:15px;}
+
+  /* ── MODALS ──────────────────────────────────── */
+  .wbox{width:calc(100vw - 20px);max-width:420px;}
+  .wm-top{padding:22px 20px 18px;}
+  .wm-nm{font-size:20px;}
+  .wm-body{padding:20px 18px 22px;}
+  .wm-lbl{font-size:11px;}
+  .uc-t{font-size:14px;}
+  .uc-s{font-size:11px;}
+  .wm-btn{height:48px;font-size:15px;}
+  .csbox{width:calc(100vw - 20px);}
+}
+
+/* ── EXTRA SMALL — under 420px ──────────────────────── */
+@media(max-width:420px){
+  .r2{grid-template-columns:1fr;}
+  .chart-frame{aspect-ratio:3/2;min-height:220px;max-height:360px;}
+  .about-grid{grid-template-columns:1fr;}
+  .pt-ic{font-size:18px;}
+  /* Even smaller PAD on tiny screens — give the plot more room */
+  .cft-b{width:30px;height:30px;font-size:11px;}
+}
+</style>
+</head>
+<body>
+<!-- WELCOME MODAL -->
+<div class="ov" id="wm">
+  <div class="wbox">
+    <div class="wm-top">
+      <div class="wm-logo"><div class="wm-mk">PF</div><div class="wm-nm">Psychro<em>Flow</em></div></div>
+      <div class="wm-sub">Professional Psychrometric Analysis Tool</div>
+    </div>
+    <div class="wm-body">
+      <div class="wm-lbl">Unit System</div>
+      <div class="ug" style="margin-bottom:16px">
+        <div class="uc on" id="wm-met" onclick="selUnits('metric')">
+          <div class="uc-ic">&#127777;&#65039;</div>
+          <span class="uc-t">Metric SI</span>
+          <span class="uc-s">&#176;C &middot; kJ/kg &middot; m&#179;/s &middot; kPa</span>
+        </div>
+        <div class="uc" id="wm-imp" onclick="selUnits('imperial')">
+          <div class="uc-ic">&#127482;&#127480;</div>
+          <span class="uc-t">Imperial I-P</span>
+          <span class="uc-s">&#176;F &middot; BTU/lb &middot; CFM &middot; psi</span>
+        </div>
+      </div>
+      <div class="wm-lbl">Language / Taal / Langue</div>
+      <select id="wm-lang-select" onchange="selLang(this.value)" style="width:100%;height:34px;padding:0 10px;background:var(--white);border:1.5px solid var(--brd);border-radius:6px;font-family:var(--sans);font-size:13px;color:var(--ink);margin-bottom:16px;cursor:pointer;outline:none;">
+        <option value="en">🇬🇧 English</option>
+        <option value="af">🇿🇦 Afrikaans</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="pt">🇵🇹 Português</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="it">🇮🇹 Italiano</option>
+        <option value="nl">🇳🇱 Nederlands</option>
+        <option value="ar">🇦🇪 العربية</option>
+        <option value="zh">🇨🇳 中文</option>
+        <option value="hi">🇮🇳 हिन्दी</option>
+        <option value="sw">🇰🇪 Kiswahili</option>
+      </select>
+      <button class="wm-btn" onclick="startApp()">&#9654; Start Analysis</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK START WIZARD -->
+<div class="ov off" id="qwiz">
+  <div class="qbox">
+    <div class="qbox-hdr">
+      <div class="qbox-title" id="qwiz-title">&#128161; Quick Start Guide</div>
+      <button class="qbox-close" onclick="closeWiz()">&#215;</button>
+    </div>
+    <div class="qbox-body">
+      <div class="q-steps" id="q-steps">
+        <div class="q-step done" id="qs0"></div>
+        <div class="q-step" id="qs1"></div>
+        <div class="q-step" id="qs2"></div>
+        <div class="q-step" id="qs3"></div>
+      </div>
+      <div id="qwiz-content"></div>
+      <div class="q-nav" id="q-nav"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CHART SETTINGS -->
+<div class="ov off" id="csm">
+  <div class="csbox">
+    <div class="cs-hdr">
+      <div class="cs-title">&#9881; Chart Settings</div>
+      <button class="cs-x" onclick="closeCsm()">&#215;</button>
+    </div>
+    <div class="cs-body">
+      <div class="sdiv">Temperature Axis (&#176;C)</div>
+      <div class="r2">
+        <div class="fg"><label class="fl">Min</label><input type="number" id="rngTmin" value="-15" onchange="applyRange()"></div>
+        <div class="fg"><label class="fl">Max</label><input type="number" id="rngTmax" value="40" onchange="applyRange()"></div>
+      </div>
+      <div class="sdiv">Humidity Ratio (g/kg)</div>
+      <div class="r2">
+        <div class="fg"><label class="fl">Min</label><input type="number" id="rngWmin" value="0" onchange="applyRange()"></div>
+        <div class="fg"><label class="fl">Max</label><input type="number" id="rngWmax" value="30" onchange="applyRange()"></div>
+      </div>
+      <div class="sdiv">Overlays</div>
+      <div class="tog-row">
+        <span class="tog-lbl">ASHRAE 55 comfort zone</span>
+        <button class="tpill" id="tcomfort" onclick="toggleSet('comfort',this)"></button>
+      </div>
+    </div>
+  </div>
+</div>
+<nav>
+  <div class="nav-i">
+    <div class="nav-l">
+      <a class="nlogo" href="#">
+        <div class="nmk">PF</div>
+        <span class="nbrand">Psychro<em>Flow</em></span>
+      </a>
+      <div class="nsep"></div>
+      <div class="nmod"><div class="npulse"></div>Psychrometric Analysis</div>
+    </div>
+    <div class="nav-r">
+      <div class="s-chip"><div class="s-dot" id="sDot"></div><span id="sTxt">Saved</span></div>
+      <div class="upill" id="upill" onclick="showUnitModal()">SI</div>
+      <button class="nb nb-g" onclick="showTab('howto')">&#128161; How to Use</button>
+      <button class="nb nb-g" onclick="showTab('settings')">&#9881; Settings</button>
+      <button class="nb nb-g" onclick="clearAll()">Clear All</button>
+      <button class="nb nb-p" onclick="exportPDF()">&#8595; PDF Report</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tb on" id="tab-chart" onclick="showTab('chart')">&#128202; Psychrometric Analysis</button>
+    <button class="tb" id="tab-theory" onclick="showTab('theory')">&#128214; Theory</button>
+    <button class="tb" id="tab-report" onclick="showTab('report')">&#128196; Report</button>
+  </div>
+</nav>
+<div class="pg on" id="pg-chart">
+<div class="chart-page">
+
+  <!-- CHART + SIDEBAR SIDE BY SIDE -->
+  <div class="chart-layout">
+
+    <!-- LEFT: CHART -->
+    <div class="chart-col">
+      <div class="chart-frame" id="chartFrame">
+        <canvas id="psychroCanvas"></canvas>
+
+        <!-- Floating toolbar -->
+        <div class="cft">
+          <button class="cft-b" onclick="openCsm()" title="Chart settings">&#9881;</button>
+          <div class="cft-sep"></div>
+          <button class="cft-b on" id="cfb-rh" onclick="toggleLayer('rh')" title="RH lines">RH</button>
+          <button class="cft-b on" id="cfb-wb" onclick="toggleLayer('wb')" title="WB lines">WB</button>
+          <button class="cft-b" id="cfb-h" onclick="toggleLayer('enth')" title="Enthalpy lines">h</button>
+          <div class="cft-sep"></div>
+          <button class="cft-b" onclick="zoomIn()" title="Zoom in">&#65291;</button>
+          <button class="cft-b" onclick="zoomReset()" title="Reset view">&#8413;</button>
+        </div>
+
+        <!-- Hover tooltip -->
+        <div class="tip" id="chartTip">
+          <div class="tip-ttl" id="tipTtl">State Point</div>
+          <div class="tip-r"><span class="tip-n">Dry Bulb</span><span class="tip-v" id="tp-db">&#8212;</span></div>
+          <div class="tip-r"><span class="tip-n">Wet Bulb</span><span class="tip-v" id="tp-wb">&#8212;</span></div>
+          <div class="tip-r"><span class="tip-n">Rel. Humidity</span><span class="tip-v" id="tp-rh">&#8212;</span></div>
+          <div class="tip-r"><span class="tip-name">Hum. Ratio</span><span class="tip-v" id="tp-hr">&#8212;</span></div>
+          <div class="tip-r"><span class="tip-n">Enthalpy</span><span class="tip-v" id="tp-h">&#8212;</span></div>
+          <div class="tip-r"><span class="tip-n">Dew Point</span><span class="tip-v" id="tp-dp">&#8212;</span></div>
+        </div>
+
+        <div class="chart-empty" id="chartEmpty" style="display:none">
+          <div class="ce-ic">&#128202;</div>
+          <div class="ce-t">Set starting conditions &rarr;<br>select a process in the sidebar</div>
+        </div>
+      </div>
+
+      <div class="chart-status">
+        <div class="st-txt" id="stCoords">Hover chart to read psychrometric properties</div>
+        <div class="st-r">
+          <span class="st-chip" id="stPts">0 points</span>
+          <span class="st-chip" id="stProcs">0 processes</span>
+        </div>
+      </div>
+
+      <!-- RESULTS — directly below chart, same column width -->
+      <div class="results-section" id="resultsSection" style="display:none">
+        <div class="rs-hdr">
+          <div>
+            <div class="rs-title">Calculated Results</div>
+            <div class="rs-sub" id="rs-sub">Psychrometric analysis output</div>
+          </div>
+        </div>
+        <div class="res-wrap">
+          <div class="res-wrap-title">CALCULATED POINT VALUES</div>
+          <div style="overflow-x:auto">
+            <table class="res-tbl" id="ptTable">
+              <thead><tr>
+                <th>Point</th><th>DB (&#176;C)</th><th>WB (&#176;C)</th>
+                <th>Dew Pt (&#176;C)</th><th>RH (%)</th><th>W (g/kg)</th>
+                <th>h (kJ/kg)</th><th>v (m&#179;/kg)</th>
+              </tr></thead>
+              <tbody id="ptTbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="res-wrap">
+          <div class="res-wrap-title">CALCULATED PROCESS CHANGES</div>
+          <div style="overflow-x:auto">
+            <table class="res-tbl" id="procTable">
+              <thead><tr>
+                <th>Process</th><th>Type</th>
+                <th>&#916;T (&#176;C)</th><th>&#916;W (g/kg)</th><th>&#916;h (kJ/kg)</th>
+                <th>Total (kW)</th><th>Sensible (kW)</th><th>Latent (kW)</th><th>SHR</th>
+              </tr></thead>
+              <tbody id="procTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- end chart-col -->
+
+    <!-- RIGHT: SIDEBAR — all inputs, no internal scroll -->
+    <div class="sidebar">
+      <div class="sb-hdr">
+        <div class="sb-htitle">PsychroFlow &middot; Psychrometric Analysis</div>
+        <div class="sb-hsub">Site conditions &amp; processes</div>
+      </div>
+
+      <!-- Site conditions + airflow merged -->
+      <div class="sb-sec">
+        <div class="sb-sec-title">Site Conditions</div>
+        <div class="r2">
+          <div class="fg"><label class="fl">Elevation (m)</label><input type="number" id="elevation" value="0" step="10" onchange="updateAtmP()"></div>
+          <div class="fg"><label class="fl">Pressure (kPa)</label>
+            <div class="iu"><input type="number" id="atmP" value="101.3" step="0.1" onchange="recalcAll()"><span class="utag">kPa</span></div>
+          </div>
+        </div>
+        <div class="fg" style="margin-top:6px">
+          <label class="fl">System Airflow</label>
+          <div class="iu">
+            <input type="number" id="sysFlow" value="1.0" step="0.1" min="0.01" onchange="recalcFlow()">
+            <span class="utog" id="flowUnitBtn" onclick="toggleFlowUnit()">m&#179;/s</span>
+          </div>
+        </div>
+        <input type="hidden" id="p0db" value="0">
+        <input type="hidden" id="p0type" value="rh">
+        <input type="hidden" id="p0val" value="50">
+        <span id="p0unit" style="display:none">%</span>
+        <div id="p0result" style="margin-top:4px"></div>
+      </div>
+
+      <!-- PROCESS BLOCKS — populated dynamically -->
+      <div class="sb-sec" id="procSec">
+        <div class="sb-sec-title">Processes</div>
+        <div id="procBlocks">
+          <div style="font-size:10px;color:var(--mu2);text-align:center;padding:12px 0">
+            Set starting conditions above, then add your first process
+          </div>
+        </div>
+        <button class="add-proc-btn" id="addProcBtn" onclick="addProcBlock()" style="display:flex">
+          + Add Process
+        </button>
+      </div>
+
+    </div><!-- end sidebar -->
+  </div><!-- end chart-layout -->
+    
+
+
+    <!-- ABOUT SECTION -->
+  <div class="about-section">
+    <div class="about-inner">
+      <div class="about-badge">About</div>
+      <div class="about-h1">What is a Psychrometric Chart?</div>
+      <div class="about-intro">The psychrometric chart is the fundamental design tool of HVAC engineering. It plots the thermodynamic properties of moist air — temperature, humidity, and energy — allowing engineers to visualise and calculate every air conditioning and ventilation process. PsychroFlow delivers altitude-corrected psychrometric calculations for HVAC engineers worldwide, with a process-driven workflow built for professional practice.</div>
+
+      <div class="about-grid">
+        <div class="about-card">
+          <div class="about-card-ic">&#128202;</div>
+          <div class="about-card-title">What it shows</div>
+          <div class="about-card-text">Every point on the chart is a unique thermodynamic state of air. The horizontal axis is dry bulb temperature. The vertical axis is humidity ratio. The curved boundary on the left is the saturation curve (100% relative humidity).</div>
+        </div>
+        <div class="about-card">
+          <div class="about-card-ic">&#127968;</div>
+          <div class="about-card-title">Why it matters</div>
+          <div class="about-card-text">Every HVAC design decision — coil sizing, AHU selection, humidifier capacity, duct conditions — starts with the psychrometric chart. It is the language of air conditioning engineering, used from preliminary design through to commissioning.</div>
+        </div>
+        <div class="about-card">
+          <div class="about-card-ic">&#127466;&#127462;</div>
+          <div class="about-card-title">Altitude correction</div>
+          <div class="about-card-text">Elevation significantly affects all psychrometric calculations. PsychroFlow corrects atmospheric pressure using the ICAO standard atmosphere formula, ensuring accurate results for any location worldwide.</div>
+        </div>
+        <div class="about-card">
+          <div class="about-card-ic">&#128218;</div>
+          <div class="about-card-title">Standards basis</div>
+          <div class="about-card-text">All calculations use the ASHRAE Handbook of Fundamentals — the same standard used in HAP, IDA ICE, and all professional HVAC software. Applicable under SANS 10400-O and ASHRAE 62.1.</div>
+        </div>
+      </div>
+
+      <div class="about-h1" style="font-size:24px;margin-bottom:12px">The Eight Air Properties</div>
+      <div class="about-props">
+        <div class="ap"><div class="ap-sym">T<sub>db</sub></div><div class="ap-name">Dry Bulb Temperature</div><div class="ap-unit">&#176;C (or &#176;F)</div><div class="ap-desc">The ordinary temperature measured by a thermometer. The horizontal axis of the chart.</div></div>
+        <div class="ap"><div class="ap-sym">T<sub>wb</sub></div><div class="ap-name">Wet Bulb Temperature</div><div class="ap-unit">&#176;C</div><div class="ap-desc">Temperature of adiabatic saturation. Lines slope diagonally down-right across the chart.</div></div>
+        <div class="ap"><div class="ap-sym">T<sub>dew</sub></div><div class="ap-name">Dew Point</div><div class="ap-unit">&#176;C</div><div class="ap-desc">Temperature at which air saturates when cooled at constant pressure. Critical for condensation control.</div></div>
+        <div class="ap"><div class="ap-sym">RH</div><div class="ap-name">Relative Humidity</div><div class="ap-unit">%</div><div class="ap-desc">Ratio of actual vapour pressure to saturation pressure. Shown as curved lines on the chart.</div></div>
+        <div class="ap"><div class="ap-sym">W</div><div class="ap-name">Humidity Ratio</div><div class="ap-unit">g/kg<sub>da</sub></div><div class="ap-desc">Mass of water vapour per kg of dry air. The vertical axis. Also called moisture content.</div></div>
+        <div class="ap"><div class="ap-sym">h</div><div class="ap-name">Specific Enthalpy</div><div class="ap-unit">kJ/kg<sub>da</sub></div><div class="ap-desc">Total heat content per kg of dry air. h = 1.006T + W(2501 + 1.86T). Used for all energy calculations.</div></div>
+        <div class="ap"><div class="ap-sym">v</div><div class="ap-name">Specific Volume</div><div class="ap-unit">m&#179;/kg<sub>da</sub></div><div class="ap-desc">Volume per kg of dry air. Used to convert volumetric to mass flow rate. Increases with temperature.</div></div>
+        <div class="ap"><div class="ap-sym">P<sub>v</sub></div><div class="ap-name">Vapour Pressure</div><div class="ap-unit">kPa</div><div class="ap-desc">Partial pressure of water vapour in the moist air mixture. Used in humidity ratio calculations.</div></div>
+      </div>
+
+      <div class="about-h1" style="font-size:24px;margin-bottom:12px">HVAC Processes Explained</div>
+      <div class="about-proc">
+        <div class="apc"><div class="apc-ic">&#10052;&#65039;</div><div class="apc-title">Cooling &amp; Dehumidification</div><div class="apc-desc">When air passes over a cooling coil below its dew point, both temperature and humidity drop. The process line moves toward the lower-left, touching the saturation curve at the Apparatus Dew Point (ADP). The bypass factor tells you how much air misses the coil surface.</div></div>
+        <div class="apc"><div class="apc-ic">&#128293;</div><div class="apc-title">Sensible Heating</div><div class="apc-desc">Air temperature rises with no change in humidity ratio (W stays constant). The process line moves horizontally to the right. Used for heating coils, reheat coils in hospitals and laboratories, and heat pumps in heating mode.</div></div>
+        <div class="apc"><div class="apc-ic">&#128167;</div><div class="apc-title">Humidification</div><div class="apc-desc">Steam humidification (isothermal) moves vertically upward at constant temperature. Adiabatic humidification follows the wet bulb line — temperature drops as humidity rises. Used in pharmaceutical cleanrooms, hospitals, and data centres.</div></div>
+        <div class="apc"><div class="apc-ic">&#127754;</div><div class="apc-title">Evaporative Cooling</div><div class="apc-desc">Water evaporates into the airstream at approximately constant enthalpy, following the wet bulb temperature line. Temperature decreases while humidity increases. Most effective in dry, hot climates. Widely used in direct and indirect evaporative coolers.</div></div>
+        <div class="apc"><div class="apc-ic">&#8644;</div><div class="apc-title">Heat Exchanger (HRV/ERV)</div><div class="apc-desc">A heat exchanger transfers energy from warm exhaust air to cooler incoming supply air (or vice versa). The supply air state moves toward the exhaust air state by a fraction equal to the heat exchanger efficiency rating (typically 60&ndash;85%).</div></div>
+        <div class="apc"><div class="apc-ic">&#8853;</div><div class="apc-title">Return Air Mixing</div><div class="apc-desc">Outside air (OA) and return air (RA) are mixed before the cooling or heating coil. The mixed air state falls on the straight line between the two states, at a position determined by the mass flow ratio. Reducing OA fraction reduces cooling load but compromises indoor air quality.</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end chart-page -->
+</div><!-- end pg-chart -->
+<!-- THEORY PAGE -->
+<div class="pg" id="pg-theory">
+  <div class="theory-page">
+    <div class="theory-hero">
+      <div class="th-badge">Engineering Reference</div>
+      <h1 class="th-h1">Psychrometric Theory for HVAC Engineers</h1>
+      <p class="th-lead">The psychrometric chart is the fundamental analytical tool of mechanical HVAC engineering. It graphically represents the thermodynamic properties of moist air and every process that changes them — from cooling coil sizing and AHU design to cleanroom humidity control and energy recovery.</p>
+    </div>
+
+    <div class="th-grid-2">
+      <div class="th-section">
+        <h2 class="th-h2"><span class="th-h2-num">01</span> What the Psychrometric Chart Shows</h2>
+        <p class="th-p">Every point on the psychrometric chart represents a unique, fully defined thermodynamic state of moist air. The <strong>horizontal axis</strong> is dry bulb temperature (T<sub>db</sub>). The <strong>vertical axis</strong> is humidity ratio (W) — the mass of water vapour per kilogram of dry air. The curved boundary on the left is the <strong>saturation curve</strong> (100% RH), representing the maximum moisture the air can hold at each temperature. All real air states exist to the right and below this curve.</p>
+        <p class="th-p">Overlaid on the chart are families of lines for constant relative humidity (curved), constant wet bulb temperature (diagonal), and constant specific enthalpy (nearly parallel to wet bulb lines). These lines allow any two known properties to uniquely locate the full air state.</p>
+      </div>
+      <div class="th-section">
+        <h2 class="th-h2"><span class="th-h2-num">02</span> Why Every HVAC Engineer Needs It</h2>
+        <p class="th-p">No HVAC design decision stands alone. Cooling coil selection, AHU sizing, chiller plant capacity, humidifier specification, heat recovery efficiency, duct insulation thresholds, and indoor air quality compliance — all are grounded in psychrometric analysis. The chart translates between the invisible physical properties of air and the engineering quantities that determine system performance and energy consumption.</p>
+        <p class="th-p">In practice, psychrometric analysis determines the <strong>sensible and latent load split</strong> of a cooling or heating process, which directly drives equipment selection and energy modelling. A 10°C drop in dew point target can halve the latent load on a cooling coil — this is not visible without plotting the process.</p>
+      </div>
+    </div>
+
+    <div class="th-section th-full">
+      <h2 class="th-h2"><span class="th-h2-num">03</span> The Eight Psychrometric Properties</h2>
+      <p class="th-p th-p-sm">Any two independent properties fully define the moist air state. PsychroFlow calculates all eight from any valid pair using ASHRAE Handbook of Fundamentals equations.</p>
+      <div class="th-prop-grid">
+        <div class="th-prop-card">
+          <div class="th-prop-sym">T<sub>db</sub></div>
+          <div class="th-prop-name">Dry Bulb Temperature</div>
+          <div class="th-prop-unit">°C (or °F)</div>
+          <p class="th-prop-desc">The standard air temperature measured by a thermometer. Forms the horizontal axis of the chart. Used for sensible heat calculations: Q<sub>s</sub> = ṁ × c<sub>p</sub> × ΔT<sub>db</sub>.</p>
+        </div>
+        <div class="th-prop-card">
+          <div class="th-prop-sym">T<sub>wb</sub></div>
+          <div class="th-prop-name">Wet Bulb Temperature</div>
+          <div class="th-prop-unit">°C</div>
+          <p class="th-prop-desc">Temperature at adiabatic saturation. Diagonal lines slope down-right across the chart. Critical for cooling tower performance, evaporative cooler effectiveness, and coil selection.</p>
+        </div>
+        <div class="th-prop-card">
+          <div class="th-prop-sym">T<sub>dp</sub></div>
+          <div class="th-prop-name">Dew Point Temperature</div>
+          <div class="th-prop-unit">°C</div>
+          <p class="th-prop-desc">Temperature at which air becomes saturated when cooled at constant pressure. Determines condensation risk on cold surfaces. Key for window glazing selection and cold pipe insulation design.</p>
+        </div>
+        <div class="th-prop-card">
+          <div class="th-prop-sym">RH</div>
+          <div class="th-prop-name">Relative Humidity</div>
+          <div class="th-prop-unit">%</div>
+          <p class="th-prop-desc">Ratio of actual water vapour pressure to saturation pressure at the same temperature: RH = P<sub>w</sub>/P<sub>ws</sub> × 100%. Shown as curved lines. Critical comfort and IAQ parameter — ASHRAE 55 targets 30–60%.</p>
+        </div>
+        <div class="th-prop-card">
+          <div class="th-prop-sym">W</div>
+          <div class="th-prop-name">Humidity Ratio</div>
+          <div class="th-prop-unit">g/kg<sub>da</sub></div>
+          <p class="th-prop-desc">Mass of water vapour per kg of dry air. Forms the vertical axis. Constant W means no moisture addition or removal (pure sensible process). W = 0.621945 × P<sub>w</sub>/(P − P<sub>w</sub>).</p>
+        </div>
+        <div class="th-prop-card">
+          <div class="th-prop-sym">h</div>
+          <div class="th-prop-name">Specific Enthalpy</div>
+          <div class="th-prop-unit">kJ/kg<sub>da</sub></div>
+          <p class="th-prop-desc">Total heat content per kg of dry air: h = 1.006T + W(2501 + 1.86T). Used for all coil duty calculations. Q<sub>total</sub> = ṁ<sub>da</sub> × Δh. Does not equal sensible heat unless W is constant.</p>
+        </div>
+        <div class="th-prop-card">
+          <div class="th-prop-sym">v</div>
+          <div class="th-prop-name">Specific Volume</div>
+          <div class="th-prop-unit">m³/kg<sub>da</sub></div>
+          <p class="th-prop-desc">Volume of moist air per kg of dry air. Used to convert between volumetric flow (m³/s from fans) and mass flow (kg/s for energy calculations): ṁ<sub>da</sub> = Q<sub>vol</sub>/v.</p>
+        </div>
+        <div class="th-prop-card">
+          <div class="th-prop-sym">P<sub>v</sub></div>
+          <div class="th-prop-name">Vapour Pressure</div>
+          <div class="th-prop-unit">kPa</div>
+          <p class="th-prop-desc">Partial pressure of water vapour in the moist air mixture. Foundation of all humidity calculations. Saturation vapour pressure P<sub>ws</sub>(T) is computed via the Magnus formula. RH = P<sub>v</sub>/P<sub>ws</sub> × 100%.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="th-grid-2">
+      <div class="th-section">
+        <h2 class="th-h2"><span class="th-h2-num">04</span> Apparatus Dew Point &amp; Bypass Factor</h2>
+        <p class="th-p">When moist air is cooled below its dew point over a cooling coil, the process line extended to the saturation curve defines the <strong>Apparatus Dew Point (ADP)</strong> — the effective mean surface temperature of the coil. It is not the refrigerant temperature; it is the thermodynamic fingerprint of the coil performance.</p>
+        <p class="th-p">The <strong>Bypass Factor (BF)</strong> quantifies the fraction of air that passes through the coil without making effective thermal contact with the coil surface:</p>
+        <div class="th-formula">BF = (T<sub>leaving</sub> − ADP) ÷ (T<sub>entering</sub> − ADP)</div>
+        <p class="th-p">A BF of 0.05–0.15 indicates good coil design (multi-row, adequate fin density, low face velocity). A BF above 0.25 suggests poor coil contact — often caused by excessive face velocity (&gt;2.5 m/s), too few rows, or wide fin spacing. The Contact Factor (CF = 1 − BF) represents the fraction of air fully conditioned to the ADP.</p>
+      </div>
+      <div class="th-section">
+        <h2 class="th-h2"><span class="th-h2-num">05</span> Sensible Heat Ratio (SHR)</h2>
+        <p class="th-p">The Sensible Heat Ratio describes the proportion of total cooling or heating that changes the air temperature (sensible) versus the proportion that changes the moisture content (latent):</p>
+        <div class="th-formula">SHR = Q<sub>sensible</sub> ÷ Q<sub>total</sub> = (ṁ × c<sub>p</sub> × ΔT) ÷ (ṁ × Δh)</div>
+        <p class="th-p">SHR is graphically the <strong>slope of the process line</strong> on the psychrometric chart. A horizontal line (SHR = 1.0) is pure sensible heating or cooling. A steeper downward slope indicates significant dehumidification.</p>
+        <p class="th-p">Design SHR targets vary by application: offices 0.85–0.95, hospitals 0.75–0.85, pharmaceutical cleanrooms 0.65–0.80, data centres near 1.0. Matching the supply air SHR to the space load SHR is fundamental to avoiding over- or under-dehumidification.</p>
+      </div>
+    </div>
+
+    <div class="th-section th-full">
+      <h2 class="th-h2"><span class="th-h2-num">06</span> HVAC Processes on the Chart</h2>
+      <div class="th-proc-grid">
+        <div class="th-proc-card" style="border-top:3px solid #1A96D4">
+          <div class="th-proc-ic">❄️</div>
+          <h3 class="th-proc-title">Cooling &amp; Dehumidification</h3>
+          <p class="th-proc-desc">Air crosses a cooling coil below its dew point. The process line moves toward the lower-left, ending on or near the saturation curve at the ADP. Dominant process in air conditioning design. Determines cooling coil UA, refrigerant capacity, and chiller plant sizing. Both sensible and latent loads must be met simultaneously.</p>
+        </div>
+        <div class="th-proc-card" style="border-top:3px solid #EA580C">
+          <div class="th-proc-ic">🔥</div>
+          <h3 class="th-proc-title">Sensible Heating</h3>
+          <p class="th-proc-desc">Temperature rises at constant humidity ratio (W). Process line is horizontal. Used for heating coils, electric strip heaters, reheat coils in VAV terminal units, and heat pumps in heating mode. Relative humidity drops significantly during sensible heating — this drives winter humidification requirements.</p>
+        </div>
+        <div class="th-proc-card" style="border-top:3px solid #0284C7">
+          <div class="th-proc-ic">💧</div>
+          <h3 class="th-proc-title">Humidification</h3>
+          <p class="th-proc-desc">Steam (isothermal): W increases at constant T<sub>db</sub> — vertical line on the chart. Adiabatic (evaporative): follows the wet bulb line, T drops while W rises. Steam humidification is used in critical environments (hospitals, laboratories, cleanrooms) where temperature control precision is essential. Sizing: ṁ<sub>steam</sub> = ṁ<sub>da</sub> × ΔW.</p>
+        </div>
+        <div class="th-proc-card" style="border-top:3px solid #059669">
+          <div class="th-proc-ic">🌬️</div>
+          <h3 class="th-proc-title">Evaporative Cooling</h3>
+          <p class="th-proc-desc">Near-constant enthalpy process along the wet bulb line. Temperature falls as humidity rises. Effectiveness = (T<sub>db,in</sub> − T<sub>db,out</sub>) / (T<sub>db,in</sub> − T<sub>wb,in</sub>). Most effective in hot, dry climates (effectiveness 70–90%). Widely used in data centres, industrial applications, and as pre-cooling for DX systems.</p>
+        </div>
+        <div class="th-proc-card" style="border-top:3px solid #6366F1">
+          <div class="th-proc-ic">⇄</div>
+          <h3 class="th-proc-title">Heat Recovery (HRV / ERV)</h3>
+          <p class="th-proc-desc">A heat exchanger transfers enthalpy from exhaust air to supply air (or vice versa). HRV (sensible only) moves state along a line toward the exhaust condition. ERV (enthalpy exchanger) transfers both sensible and latent energy. Efficiency = (h<sub>out</sub> − h<sub>in</sub>) / (h<sub>exhaust</sub> − h<sub>in</sub>). Critical for energy-efficient ventilation in ASHRAE 90.1 compliance.</p>
+        </div>
+        <div class="th-proc-card" style="border-top:3px solid #7C3AED">
+          <div class="th-proc-ic">⊕</div>
+          <h3 class="th-proc-title">Return Air Mixing</h3>
+          <p class="th-proc-desc">Outside air (OA) and return air (RA) are mixed upstream of the conditioning coil. The mixed air state lies on the straight line between OA and RA states, at a position set by the mass flow ratio. Reducing OA fraction saves cooling energy but reduces IAQ. Minimum OA is governed by ASHRAE 62.1 or local equivalent. PsychroFlow calculates the mixed air state for any OA fraction.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="th-section th-full th-callout">
+      <h2 class="th-h2"><span class="th-h2-num">07</span> Altitude and Atmospheric Pressure Correction</h2>
+      <div class="th-grid-2" style="gap:24px;margin-top:0">
+        <div>
+          <p class="th-p">Atmospheric pressure decreases with elevation following the ICAO standard atmosphere model. This is not a minor correction — at 1750 m elevation, atmospheric pressure is approximately 82 kPa versus 101.3 kPa at sea level, an 18.5% reduction. Since humidity ratio W is directly proportional to vapour pressure and inversely proportional to atmospheric pressure, a given relative humidity corresponds to a significantly lower W at altitude.</p>
+          <p class="th-p">PsychroFlow applies the ICAO standard atmosphere formula for all calculations:</p>
+          <div class="th-formula">P = 101.325 × (1 − 2.2558 × 10⁻⁵ × z)⁵·²⁵⁵⁸ kPa</div>
+          <p class="th-p">where z is elevation in metres. This matches the formula used in ASHRAE Handbook of Fundamentals and major simulation tools (HAP, IDA ICE, EnergyPlus).</p>
+        </div>
+        <div>
+          <p class="th-p">The practical consequences of altitude for HVAC design are significant:</p>
+          <ul class="th-list">
+            <li>Fan power increases because volumetric flow must increase to deliver the same mass flow rate at reduced density</li>
+            <li>Cooling coil capacity reduces because the same volumetric airflow carries less mass — coil selection at sea-level conditions will be undersized</li>
+            <li>Evaporative cooling effectiveness improves because the wet bulb depression is larger at altitude</li>
+            <li>Refrigerant pipe sizing must account for reduced suction pressure ratio</li>
+            <li>AHU filter pressure drops require correction when specifying at altitude</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="th-section th-full">
+      <h2 class="th-h2"><span class="th-h2-num">08</span> Key ASHRAE Standards for Psychrometric Design</h2>
+      <div class="th-std-grid">
+        <div class="th-std-card">
+          <div class="th-std-name">ASHRAE 55</div>
+          <div class="th-std-title">Thermal Environmental Conditions for Human Occupancy</div>
+          <p class="th-std-desc">Defines the acceptable temperature and humidity ranges for human comfort. The comfort zone on a psychrometric chart typically falls between 20–26°C dry bulb and 30–60% RH. Operative temperature, clothing insulation (clo), and metabolic rate are additional variables. PsychroFlow can overlay the ASHRAE 55 comfort zone on the chart.</p>
+        </div>
+        <div class="th-std-card">
+          <div class="th-std-name">ASHRAE 62.1</div>
+          <div class="th-std-title">Ventilation and Indoor Air Quality</div>
+          <p class="th-std-desc">Sets minimum outdoor air ventilation rates and indoor air quality requirements for non-residential buildings. Directly impacts the OA/RA mixing ratio, which is a core PsychroFlow process type. Moisture-related IAQ requirements (prevention of mould at surfaces &lt;70% RH) are determined through dew point analysis.</p>
+        </div>
+        <div class="th-std-card">
+          <div class="th-std-name">ASHRAE 90.1</div>
+          <div class="th-std-title">Energy Standard for Buildings</div>
+          <p class="th-std-desc">Specifies minimum energy efficiency requirements including heat recovery, economiser cycles, and humidity control. The psychrometric chart is the primary tool for demonstrating compliance with economiser operation limits and energy recovery calculations.</p>
+        </div>
+        <div class="th-std-card">
+          <div class="th-std-name">ASHRAE Fundamentals Ch.1</div>
+          <div class="th-std-title">Psychrometrics — The Calculation Basis</div>
+          <p class="th-std-desc">PsychroFlow implements the equations in ASHRAE Handbook of Fundamentals Chapter 1 for all property calculations. Saturation pressure uses the Antoine/Magnus equation. Humidity ratio, enthalpy, specific volume, wet bulb, and dew point are all computed per ASHRAE 2017 HoF for metric SI units.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- HOW TO USE PAGE -->
+<div class="pg" id="pg-howto">
+  <div class="cp">
+    <div class="cp-h1">How to Use PsychroFlow</div>
+    <div class="cp-intro">PsychroFlow uses a process-driven workflow. Set your site conditions and starting air state in the sidebar, then add processes one by one. Each process calculates the end state and plots it on the chart.</div>
+    <div class="sl">
+      <div class="si"><div class="sc">1</div><div><div class="s-t">Set Site Conditions</div><div class="s-d">Select your SA city from the sidebar dropdown (sets elevation and pressure automatically), or enter elevation manually. The atmospheric pressure updates in real time.</div></div></div>
+      <div class="si"><div class="sc">2</div><div><div class="s-t">Enter Starting Air Conditions</div><div class="s-d">Enter the starting dry bulb temperature and select a second known property (RH, wet bulb, humidity ratio, or dew point). Enter the system airflow. Click <strong>Set Starting Conditions</strong> to plot Point 0 on the chart.</div></div></div>
+      <div class="si"><div class="sc">3</div><div><div class="s-t">Select a Process Type</div><div class="s-d">Click one of the process buttons in the sidebar: &#10052; Cooling, &#128293; Heating, &#128167; Humidification, &#127754; Evaporative Cooling, &#8644; Heat Exchanger, &#8853; Return Air Mix, or &#9999; Custom.</div></div></div>
+      <div class="si"><div class="sc">4</div><div><div class="s-t">Enter End Conditions and Calculate</div><div class="s-d">Enter the target leaving conditions or process parameters. Click <strong>Calculate</strong>. The process is drawn on the chart and results appear in the tables below the chart.</div></div></div>
+      <div class="si"><div class="sc">5</div><div><div class="s-t">Add More Processes</div><div class="s-d">Click <strong>+ Add Process</strong> in the sidebar. The next process automatically starts from the end of the previous one. Example: cooling from 33&#176;C to 13&#176;C, then reheating from 13&#176;C to 22&#176;C. All processes show simultaneously on the chart.</div></div></div>
+      <div class="si"><div class="sc">6</div><div><div class="s-t">Generate PDF Report</div><div class="s-d">Click the <strong>Report</strong> tab. Enter project and engineer details. Click <strong>Generate PDF Report</strong>. A professional A4 report opens in a new window &#8212; use Print &#8594; Save as PDF.</div></div></div>
+    </div>
+    <div class="cp-h2">Chart Controls</div>
+    <div class="cp-p">The floating toolbar at the bottom-left of the chart: <strong>&#9881;</strong> opens chart settings (axis ranges, comfort zone). <strong>RH/WB/h</strong> toggle those line layers. <strong>+</strong> zooms in centred on the chart. <strong>&#8413;</strong> resets to the default view (-15 to +40&#176;C).</div>
+    <div class="cp-p">Hover your cursor near any plotted state point to see a full property tooltip. The status bar below the chart shows your cursor position in real time.</div>
+    <div class="cp-h2">Keyboard Shortcuts</div>
+    <div class="cp-p"><strong>Ctrl+Z</strong> &#8212; Undo last process. &nbsp; <strong>Ctrl+P</strong> &#8212; Open Report tab.</div>
+  </div>
+</div>
+
+<!-- REPORT PAGE -->
+<div class="pg" id="pg-report">
+  <div class="rp">
+    <div class="rcard">
+      <div class="rcard-t">Generate Engineering Report</div>
+      <div class="rcard-s">Enter project details below. The report includes the psychrometric chart, all state point properties, and process analysis.</div>
+      <div class="sdiv">Project Details</div>
+      <div class="r2">
+        <div class="fg"><label class="fl">Project Name</label><input type="text" id="rp-proj" placeholder="e.g. Netcare Milpark &#8212; ICU AHU"></div>
+        <div class="fg"><label class="fl">Project Reference</label><input type="text" id="rp-ref" placeholder="e.g. NMH-HVAC-001"></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label class="fl">Client</label><input type="text" id="rp-client" placeholder="Client or company name"></div>
+        <div class="fg"><label class="fl">Site</label><input type="text" id="rp-site" placeholder="Site name or address"></div>
+      </div>
+      <div class="sdiv">Engineer Details</div>
+      <div class="r2">
+        <div class="fg"><label class="fl">Engineer Name</label><input type="text" id="rp-eng" placeholder="Full name"></div>
+        <div class="fg"><label class="fl">Date</label><input type="date" id="rp-date"></div>
+      </div>
+      <!-- Hidden for compatibility -->
+      <input type="hidden" id="rp-reg" value="">
+      <input type="hidden" id="rp-disc" value="Mechanical Engineering">
+      <div class="sdiv">Notes</div>
+      <div class="fg"><label class="fl">Scope / Notes</label><textarea id="rp-notes" rows="3" style="width:100%;padding:8px 9px;background:var(--white);border:1.5px solid var(--brd);border-radius:6px;font-family:var(--sans);font-size:13px;color:var(--ink);outline:none;resize:vertical;" placeholder="Design scope, constraints, or notes..."></textarea></div>
+      <button class="rgen" onclick="exportPDF()">&#8595; Generate PDF Report</button>
+      <div style="font-size:10px;color:var(--mu);margin-top:8px;text-align:center">Report opens in new window &mdash; Print &#8594; Save as PDF</div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div class="pg" id="pg-settings">
+  <div class="sp">
+    <div style="font-family:var(--serif);font-size:22px;font-weight:700;color:var(--ink);margin-bottom:20px;">Settings</div>
+    <div class="scard">
+      <div class="scard-t">Unit System</div>
+      <div class="ug" style="max-width:300px">
+        <div class="uc on" id="set-met" onclick="selUnits('metric');document.getElementById('set-met').classList.add('on');document.getElementById('set-imp').classList.remove('on')">
+          <div class="uc-ic">&#127777;&#65039;</div><span class="uc-t">Metric SI</span><span class="uc-s">&#176;C &middot; kJ/kg</span>
+        </div>
+        <div class="uc" id="set-imp" onclick="selUnits('imperial');document.getElementById('set-imp').classList.add('on');document.getElementById('set-met').classList.remove('on')">
+          <div class="uc-ic">&#127482;&#127480;</div><span class="uc-t">Imperial I-P</span><span class="uc-s">&#176;F &middot; BTU/lb</span>
+        </div>
+      </div>
+    </div>
+    <div class="scard">
+      <div class="scard-t">Chart Layers</div>
+      <div class="tog-row"><span class="tog-lbl">Relative Humidity lines</span><button class="tpill on" id="st-rh" onclick="toggleLayer('rh');this.classList.toggle('on')"></button></div>
+      <div class="tog-row"><span class="tog-lbl">Wet Bulb lines</span><button class="tpill on" id="st-wb" onclick="toggleLayer('wb');this.classList.toggle('on')"></button></div>
+      <div class="tog-row"><span class="tog-lbl">Enthalpy lines</span><button class="tpill" id="st-enth" onclick="toggleLayer('enth');this.classList.toggle('on')"></button></div>
+      <div class="tog-row"><span class="tog-lbl">Grid lines</span><button class="tpill on" id="st-grid" onclick="toggleLayer('grid');this.classList.toggle('on')"></button></div>
+    </div>
+    <div class="scard">
+      <div class="scard-t">Session</div>
+      <button class="btn btn-o" onclick="clearSession()" style="width:auto">Clear saved session data</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span>&#10003;</span><span id="toastMsg">Done</span></div>
+<footer>
+  <div style="margin-bottom:8px;font-family:'Fraunces',serif;font-size:14px;font-weight:700;color:white">
+    Psychro<em style="color:rgba(255,255,255,0.65);font-style:normal">Flow</em>
+  </div>
+  <div style="margin-bottom:10px;font-size:11px;color:rgba(255,255,255,0.55)">
+    Professional HVAC Psychrometric Analysis Tool
+  </div>
+  <div class="footer-links">
+    <a href="#">Terms &amp; Conditions</a>
+    <a href="#">Privacy Statement</a>
+    <a href="#">Disclaimer</a>
+    <a href="#">Contact</a>
+    <a href="#">Changelog</a>
+  </div>
+  <div style="margin-top:10px;font-size:10px;color:rgba(255,255,255,0.35)">
+    Calculations based on ASHRAE Handbook of Fundamentals &bull; Not professional advice &bull; &copy; 2026 PsychroFlow
+  </div>
+</footer><script>
+'use strict';
+
+// ════════════════════════════════════════════════════════════
+// UNIT SYSTEM
+// ════════════════════════════════════════════════════════════
+let unitSys='metric', flowUnit='m3s', appLang='en';
+
+function selUnits(s){
+  unitSys=s;
+  ['wm-met','wm-imp'].forEach(id=>document.getElementById(id)?.classList.remove('on'));
+  document.getElementById(s==='metric'?'wm-met':'wm-imp')?.classList.add('on');
+  document.getElementById('upill').textContent=s==='metric'?'SI':'I-P';
+  saveSession();
+}
+function startApp(){
+  document.getElementById('wm').classList.add('off');
+  document.getElementById('upill').textContent=unitSys==='metric'?'SI':'I-P';
+  applyLang();
+  saveSession();
+  // Auto-add first block for brand-new sessions
+  setTimeout(()=>{
+    if(document.querySelectorAll('.proc-block').length===0){
+      addProcBlock();
+      const hint=document.querySelector('#procBlocks div[style*="text-align:center"]');
+      if(hint)hint.remove();
+    }
+  },50);
+}
+function showUnitModal(){
+  document.getElementById('wm').classList.remove('off');
+  const sel=document.getElementById('wm-lang-select');
+  if(sel)sel.value=appLang;
+}
+// ════════════════════════════════════════════════════════════
+// TRANSLATIONS
+// ════════════════════════════════════════════════════════════
+const LANGS={
+  en:{
+    unit_system:'Unit System',lang_label:'Language',start_btn:'Start Analysis',
+    how_to_use:'How to Use',settings:'Settings',clear_all:'Clear All',pdf_report:'PDF Report',
+    psych_analysis:'Psychrometric Analysis',theory:'Theory',report:'Report',
+    site_airflow:'Site & Airflow',elevation:'Elevation (m)',pressure:'Pressure (kPa)',
+    sys_airflow:'System Airflow',processes:'Processes',
+    add_process:'+ Add Process',set_conditions:'✓ Set Starting Conditions',
+    select_type:'Select process type below',start_db:'Start DB (°C)',
+    calculate:'Calculate →',process:'Process',
+    pt_values:'Calculated Point Values',proc_changes:'Calculated Process Changes',
+    coil_perf:'Cooling Coil Performance',
+    hover_chart:'Hover chart to read psychrometric properties',
+    no_processes:'No processes',
+    about_title:'What is a Psychrometric Chart?',
+    eight_props:'The Eight Air Properties',
+    processes_explained:'HVAC Processes Explained',
+    wm_sub:'Professional Psychrometric Analysis Tool',
+    sb_hsub:'Site conditions & processes',
+  },
+  af:{
+    unit_system:'Eenheidstelsels',lang_label:'Taal',start_btn:'Begin Analise',
+    how_to_use:'Hoe om te gebruik',settings:'Instellings',clear_all:'Verwyder alles',pdf_report:'PDF Verslag',
+    psych_analysis:'Psigometriese Analise',theory:'Teorie',report:'Verslag',
+    site_airflow:'Terrein & Lugvloei',elevation:'Hoogte (m)',pressure:'Druk (kPa)',
+    sys_airflow:'Stelsel Lugvloei',processes:'Prosesse',
+    add_process:'+ Voeg Proses By',set_conditions:'✓ Stel Begintoestande',
+    select_type:'Kies proses tipe hieronder',start_db:'Begin DB (°C)',
+    calculate:'Bereken →',process:'Proses',
+    pt_values:'Berekende Puntswaardes',proc_changes:'Berekende Proseswysigings',
+    coil_perf:'Koelprestasie',
+    hover_chart:'Beweeg oor die grafiek om lesings te sien',
+    no_processes:'Geen prosesse',
+    about_title:'Wat is \u2019n Psigometriese Grafiek?',
+    eight_props:'Die Agt Lugeenskappe',
+    processes_explained:'HVAK Prosesse Verduidelik',
+    wm_sub:'Professionele Psigometriese Analise Hulpmiddel',
+    sb_hsub:'Terreintoestande & prosesse',
+  },
+  fr:{
+    unit_system:'Système d\u2019unités',lang_label:'Langue',start_btn:'Démarrer l\u2019analyse',
+    how_to_use:'Mode d\u2019emploi',settings:'Paramètres',clear_all:'Tout effacer',pdf_report:'Rapport PDF',
+    psych_analysis:'Analyse Psychrométrique',theory:'Théorie',report:'Rapport',
+    site_airflow:'Site & Débit d\u2019air',elevation:'Altitude (m)',pressure:'Pression (kPa)',
+    sys_airflow:'Débit d\u2019air du système',processes:'Processus',
+    add_process:'+ Ajouter un processus',set_conditions:'✓ Définir les conditions initiales',
+    select_type:'Sélectionner le type de processus',start_db:'TB départ (°C)',
+    calculate:'Calculer →',process:'Processus',
+    pt_values:'Valeurs des points calculés',proc_changes:'Changements de processus calculés',
+    coil_perf:'Performance de la batterie froide',
+    hover_chart:'Survoler le graphique pour lire les propriétés',
+    no_processes:'Aucun processus',
+    about_title:'Qu\u2019est-ce qu\u2019un diagramme psychrométrique?',
+    eight_props:'Les huit propriétés de l\u2019air',
+    processes_explained:'Processus HVAC expliqués',
+    wm_sub:'Outil professionnel d\u2019analyse psychrométrique',
+    sb_hsub:'Conditions du site & processus',
+  },
+  pt:{
+    unit_system:'Sistema de unidades',lang_label:'Idioma',start_btn:'Iniciar análise',
+    how_to_use:'Como usar',settings:'Configurações',clear_all:'Limpar tudo',pdf_report:'Relatório PDF',
+    psych_analysis:'Análise Psicrométrica',theory:'Teoria',report:'Relatório',
+    site_airflow:'Local & Fluxo de ar',elevation:'Altitude (m)',pressure:'Pressão (kPa)',
+    sys_airflow:'Fluxo de ar do sistema',processes:'Processos',
+    add_process:'+ Adicionar processo',set_conditions:'✓ Definir condições iniciais',
+    select_type:'Selecionar tipo de processo',start_db:'TB inicial (°C)',
+    calculate:'Calcular →',process:'Processo',
+    pt_values:'Valores dos pontos calculados',proc_changes:'Alterações de processo calculadas',
+    coil_perf:'Desempenho da serpentina',
+    hover_chart:'Passe o cursor sobre o gráfico para ler as propriedades',
+    no_processes:'Sem processos',
+    about_title:'O que é um gráfico psicrométrico?',
+    eight_props:'As oito propriedades do ar',
+    processes_explained:'Processos AVAC explicados',
+    wm_sub:'Ferramenta profissional de análise psicrométrica',
+    sb_hsub:'Condições do local & processos',
+  },
+  de:{
+    unit_system:'Einheitensystem',lang_label:'Sprache',start_btn:'Analyse starten',
+    how_to_use:'Anleitung',settings:'Einstellungen',clear_all:'Alles löschen',pdf_report:'PDF-Bericht',
+    psych_analysis:'Psychrometrische Analyse',theory:'Theorie',report:'Bericht',
+    site_airflow:'Standort & Luftstrom',elevation:'Höhe (m)',pressure:'Druck (kPa)',
+    sys_airflow:'System-Luftstrom',processes:'Prozesse',
+    add_process:'+ Prozess hinzufügen',set_conditions:'✓ Startbedingungen festlegen',
+    select_type:'Prozesstyp auswählen',start_db:'Start-Trockentemperatur (°C)',
+    calculate:'Berechnen →',process:'Prozess',
+    pt_values:'Berechnete Punktwerte',proc_changes:'Berechnete Prozessänderungen',
+    coil_perf:'Kühlregisterleistung',
+    hover_chart:'Über das Diagramm fahren zum Ablesen',
+    no_processes:'Keine Prozesse',
+    about_title:'Was ist ein Psychrometrisches Diagramm?',
+    eight_props:'Die acht Lufteigenschaften',
+    processes_explained:'HLK-Prozesse erklärt',
+    wm_sub:'Professionelles psychrometrisches Analysetool',
+    sb_hsub:'Standortbedingungen & Prozesse',
+  },
+  es:{
+    unit_system:'Sistema de unidades',lang_label:'Idioma',start_btn:'Iniciar análisis',
+    how_to_use:'Cómo usar',settings:'Configuración',clear_all:'Borrar todo',pdf_report:'Informe PDF',
+    psych_analysis:'Análisis Psicrométrico',theory:'Teoría',report:'Informe',
+    site_airflow:'Sitio & Flujo de aire',elevation:'Altitud (m)',pressure:'Presión (kPa)',
+    sys_airflow:'Flujo de aire del sistema',processes:'Procesos',
+    add_process:'+ Añadir proceso',set_conditions:'✓ Establecer condiciones iniciales',
+    select_type:'Seleccionar tipo de proceso',start_db:'TB inicial (°C)',
+    calculate:'Calcular →',process:'Proceso',
+    pt_values:'Valores de puntos calculados',proc_changes:'Cambios de proceso calculados',
+    coil_perf:'Rendimiento del serpentín',
+    hover_chart:'Pase el cursor sobre el gráfico para leer las propiedades',
+    no_processes:'Sin procesos',
+    about_title:'¿Qué es un diagrama psicrométrico?',
+    eight_props:'Las ocho propiedades del aire',
+    processes_explained:'Procesos HVAC explicados',
+    wm_sub:'Herramienta profesional de análisis psicrométrico',
+    sb_hsub:'Condiciones del sitio & procesos',
+  },
+  it:{
+    unit_system:'Sistema di unità',lang_label:'Lingua',start_btn:'Avvia analisi',
+    how_to_use:'Come usare',settings:'Impostazioni',clear_all:'Cancella tutto',pdf_report:'Report PDF',
+    psych_analysis:'Analisi Psicrometrica',theory:'Teoria',report:'Report',
+    site_airflow:'Sito & Portata aria',elevation:'Altitudine (m)',pressure:'Pressione (kPa)',
+    sys_airflow:'Portata aria di sistema',processes:'Processi',
+    add_process:'+ Aggiungi processo',set_conditions:'✓ Imposta condizioni iniziali',
+    select_type:'Seleziona tipo di processo',start_db:'TB iniziale (°C)',
+    calculate:'Calcola →',process:'Processo',
+    pt_values:'Valori dei punti calcolati',proc_changes:'Variazioni di processo calcolate',
+    coil_perf:'Prestazioni della batteria di raffreddamento',
+    hover_chart:'Passare sopra il grafico per leggere le proprietà',
+    no_processes:'Nessun processo',
+    about_title:'Cos\u2019è un diagramma psicrometrico?',
+    eight_props:'Le otto proprietà dell\u2019aria',
+    processes_explained:'Processi HVAC spiegati',
+    wm_sub:'Strumento professionale di analisi psicrometrica',
+    sb_hsub:'Condizioni del sito & processi',
+  },
+  nl:{
+    unit_system:'Eenhedenstelsel',lang_label:'Taal',start_btn:'Analyse starten',
+    how_to_use:'Handleiding',settings:'Instellingen',clear_all:'Alles wissen',pdf_report:'PDF-rapport',
+    psych_analysis:'Psychrometrische Analyse',theory:'Theorie',report:'Rapport',
+    site_airflow:'Locatie & Luchtdebiet',elevation:'Hoogte (m)',pressure:'Druk (kPa)',
+    sys_airflow:'Systeem luchtdebiet',processes:'Processen',
+    add_process:'+ Proces toevoegen',set_conditions:'✓ Begincondities instellen',
+    select_type:'Selecteer procestype',start_db:'Start DB (°C)',
+    calculate:'Berekenen →',process:'Proces',
+    pt_values:'Berekende puntwaarden',proc_changes:'Berekende proceswijzigingen',
+    coil_perf:'Koelpakket prestaties',
+    hover_chart:'Beweeg over de grafiek om eigenschappen te lezen',
+    no_processes:'Geen processen',
+    about_title:'Wat is een Psychrometrische diagram?',
+    eight_props:'De acht lucht eigenschappen',
+    processes_explained:'HVAC processen uitgelegd',
+    wm_sub:'Professionele psychrometrische analysetool',
+    sb_hsub:'Locatieomstandigheden & processen',
+  },
+  ar:{
+    unit_system:'نظام الوحدات',lang_label:'اللغة',start_btn:'بدء التحليل',
+    how_to_use:'كيفية الاستخدام',settings:'الإعدادات',clear_all:'مسح الكل',pdf_report:'تقرير PDF',
+    psych_analysis:'التحليل السيكرومتري',theory:'النظرية',report:'التقرير',
+    site_airflow:'الموقع وتدفق الهواء',elevation:'الارتفاع (م)',pressure:'الضغط (كيلو باسكال)',
+    sys_airflow:'تدفق هواء النظام',processes:'العمليات',
+    add_process:'+ إضافة عملية',set_conditions:'✓ تعيين الشروط الابتدائية',
+    select_type:'اختر نوع العملية',start_db:'درجة حرارة الجفاف الابتدائية (°C)',
+    calculate:'احسب →',process:'عملية',
+    pt_values:'قيم النقاط المحسوبة',proc_changes:'تغييرات العملية المحسوبة',
+    coil_perf:'أداء ملف التبريد',
+    hover_chart:'مرر المؤشر فوق الرسم البياني لقراءة الخصائص',
+    no_processes:'لا توجد عمليات',
+    about_title:'ما هو المخطط السيكرومتري؟',
+    eight_props:'خصائص الهواء الثماني',
+    processes_explained:'عمليات HVAC موضحة',
+    wm_sub:'أداة تحليل سيكرومتري احترافية',
+    sb_hsub:'ظروف الموقع والعمليات',
+  },
+  zh:{
+    unit_system:'单位制',lang_label:'语言',start_btn:'开始分析',
+    how_to_use:'使用说明',settings:'设置',clear_all:'清除全部',pdf_report:'PDF报告',
+    psych_analysis:'焓湿图分析',theory:'理论',report:'报告',
+    site_airflow:'场地与风量',elevation:'海拔 (m)',pressure:'大气压 (kPa)',
+    sys_airflow:'系统风量',processes:'过程',
+    add_process:'+ 添加过程',set_conditions:'✓ 设定初始状态',
+    select_type:'选择过程类型',start_db:'起始干球温度 (°C)',
+    calculate:'计算 →',process:'过程',
+    pt_values:'计算状态点参数',proc_changes:'计算过程变化量',
+    coil_perf:'冷盘管性能',
+    hover_chart:'鼠标悬停于图表上读取参数',
+    no_processes:'无过程',
+    about_title:'什么是焓湿图？',
+    eight_props:'空气的八个参数',
+    processes_explained:'暖通空调过程详解',
+    wm_sub:'专业焓湿图分析工具',
+    sb_hsub:'场地条件与过程',
+  },
+  hi:{
+    unit_system:'इकाई प्रणाली',lang_label:'भाषा',start_btn:'विश्लेषण शुरू करें',
+    how_to_use:'उपयोग कैसे करें',settings:'सेटिंग्स',clear_all:'सब हटाएं',pdf_report:'PDF रिपोर्ट',
+    psych_analysis:'साइक्रोमेट्रिक विश्लेषण',theory:'सिद्धांत',report:'रिपोर्ट',
+    site_airflow:'साइट और वायु प्रवाह',elevation:'ऊंचाई (m)',pressure:'दबाव (kPa)',
+    sys_airflow:'सिस्टम वायु प्रवाह',processes:'प्रक्रियाएं',
+    add_process:'+ प्रक्रिया जोड़ें',set_conditions:'✓ प्रारंभिक स्थितियां सेट करें',
+    select_type:'प्रक्रिया प्रकार चुनें',start_db:'प्रारंभ DB (°C)',
+    calculate:'गणना करें →',process:'प्रक्रिया',
+    pt_values:'गणना किए गए बिंदु मान',proc_changes:'गणना किए गए प्रक्रिया परिवर्तन',
+    coil_perf:'कूलिंग कॉइल प्रदर्शन',
+    hover_chart:'गुण पढ़ने के लिए चार्ट पर होवर करें',
+    no_processes:'कोई प्रक्रिया नहीं',
+    about_title:'साइक्रोमेट्रिक चार्ट क्या है?',
+    eight_props:'वायु के आठ गुण',
+    processes_explained:'HVAC प्रक्रियाएं समझाई गईं',
+    wm_sub:'पेशेवर साइक्रोमेट्रिक विश्लेषण उपकरण',
+    sb_hsub:'साइट स्थितियां और प्रक्रियाएं',
+  },
+  sw:{
+    unit_system:'Mfumo wa vitengo',lang_label:'Lugha',start_btn:'Anza Uchambuzi',
+    how_to_use:'Jinsi ya kutumia',settings:'Mipangilio',clear_all:'Futa yote',pdf_report:'Ripoti ya PDF',
+    psych_analysis:'Uchambuzi wa Psikrometri',theory:'Nadharia',report:'Ripoti',
+    site_airflow:'Eneo & Mtiririko wa hewa',elevation:'Mwinuko (m)',pressure:'Shinikizo (kPa)',
+    sys_airflow:'Mtiririko wa hewa ya mfumo',processes:'Michakato',
+    add_process:'+ Ongeza mchakato',set_conditions:'✓ Weka hali za mwanzo',
+    select_type:'Chagua aina ya mchakato',start_db:'DB ya kuanzia (°C)',
+    calculate:'Hesabu →',process:'Mchakato',
+    pt_values:'Maadili ya pointi zilizohesabiwa',proc_changes:'Mabadiliko ya mchakato yaliyohesabiwa',
+    coil_perf:'Utendaji wa kipoza',
+    hover_chart:'Elekeza juu ya chati kusoma sifa',
+    no_processes:'Hakuna michakato',
+    about_title:'Chati ya Psikrometri ni nini?',
+    eight_props:'Sifa nane za hewa',
+    processes_explained:'Michakato ya HVAC imeelezwa',
+    wm_sub:'Zana ya kitaalamu ya uchambuzi wa psikrometri',
+    sb_hsub:'Hali za eneo & michakato',
+  },
+};
+
+function t(key){return(LANGS[appLang]||LANGS.en)[key]||(LANGS.en[key]||key);}
+
+function applyLang(){
+  const L=appLang;
+  const isRTL=(L==='ar');
+  document.documentElement.lang=L;
+  document.documentElement.dir=isRTL?'rtl':'ltr';
+
+  // Welcome modal
+  const wmLbls=document.querySelectorAll('.wm-lbl');
+  if(wmLbls[0])wmLbls[0].textContent=t('unit_system');
+  if(wmLbls[1])wmLbls[1].textContent=t('lang_label');
+  const wmBtn=document.querySelector('.wm-btn');
+  if(wmBtn)wmBtn.innerHTML='&#9654; '+t('start_btn');
+  const wmSub=document.querySelector('.wm-sub');
+  if(wmSub)wmSub.textContent=t('wm_sub');
+
+  // Nav buttons
+  const howBtn=document.querySelector('.nb-g[onclick*="howto"]');
+  if(howBtn)howBtn.innerHTML='&#128161; '+t('how_to_use');
+  const setBtn=document.querySelector('.nb-g[onclick*="settings"]');
+  if(setBtn)setBtn.innerHTML='&#9881; '+t('settings');
+  const clrBtn=document.querySelector('.nb-g[onclick*="clearAll"]');
+  if(clrBtn)clrBtn.textContent=t('clear_all');
+  const pdfBtn=document.querySelector('.nb-p[onclick*="exportPDF"]');
+  if(pdfBtn)pdfBtn.innerHTML='&#8595; '+t('pdf_report');
+
+  // Tabs
+  const tabChart=document.getElementById('tab-chart');
+  if(tabChart)tabChart.innerHTML='&#128202; '+t('psych_analysis');
+  const tabTheory=document.getElementById('tab-theory');
+  if(tabTheory)tabTheory.innerHTML='&#128214; '+t('theory');
+  const tabReport=document.getElementById('tab-report');
+  if(tabReport)tabReport.innerHTML='&#128196; '+t('report');
+
+  // Sidebar header
+  const sbhsub=document.querySelector('.sb-hsub');
+  if(sbhsub)sbhsub.textContent=t('sb_hsub');
+
+  // Section titles (first = Site & Airflow, second = Processes)
+  const secTitles=document.querySelectorAll('.sb-sec-title');
+  if(secTitles[0])secTitles[0].textContent=t('site_airflow');
+  if(secTitles[1])secTitles[1].textContent=t('processes');
+
+  // Form labels in site section
+  document.querySelectorAll('.fl').forEach(el=>{
+    const txt=el.textContent.trim();
+    if(txt.startsWith('Elevation')||txt.startsWith('Hoogte')||txt.startsWith('Altitude')||
+       txt.startsWith('Altitud')||txt.startsWith('ارتفاع')||txt.startsWith('海拔')||
+       txt.startsWith('ऊंचाई')||txt.startsWith('Mwinuko')||txt.startsWith('Höhe')||
+       txt.startsWith('Altitudine'))
+      el.textContent=t('elevation');
+    if(txt.startsWith('Pressure')||txt.startsWith('Druk')||txt.startsWith('Pression')||
+       txt.startsWith('Pressão')||txt.startsWith('Druck')||txt.startsWith('Presión')||
+       txt.startsWith('الضغط')||txt.startsWith('大气压')||txt.startsWith('दबाव')||
+       txt.startsWith('Shinikizo'))
+      el.textContent=t('pressure');
+    if(txt.startsWith('System Airflow')||txt.startsWith('Stelsel')||txt.startsWith('Débit')||
+       txt.startsWith('Fluxo')||txt.startsWith('System-Luft')||txt.startsWith('Flujo')||
+       txt.startsWith('Portata')||txt.startsWith('Luchtdebiet')||txt.startsWith('تدفق')||
+       txt.startsWith('系统')||txt.startsWith('सिस्टम')||txt.startsWith('Mtiririko'))
+      el.textContent=t('sys_airflow');
+  });
+
+  // Set starting conditions button
+  const setP0Btn=document.querySelector('.btn-p.btn-f[onclick*="setP0"]');
+  if(setP0Btn)setP0Btn.textContent=t('set_conditions');
+
+  // Add process button
+  const addBtn=document.getElementById('addProcBtn');
+  if(addBtn)addBtn.textContent=t('add_process');
+
+  // Empty processes hint
+  const procHint=document.querySelector('#procBlocks div[style*="text-align:center"]');
+  if(procHint)procHint.textContent=t('select_type');
+
+  // Status bar hover text (if not hovering)
+  const stCoords=document.getElementById('stCoords');
+  if(stCoords&&stCoords.textContent.includes('Hover')||stCoords&&stCoords.textContent.includes('Beweeg')||
+     stCoords&&stCoords.textContent.includes('Passe')||stCoords&&stCoords.textContent.includes('Survoler'))
+    stCoords.textContent=t('hover_chart');
+
+  // Results section headings
+  const ptTitle=document.querySelector('#ptSection .res-blk-ttl');
+  if(ptTitle)ptTitle.textContent=t('pt_values');
+  const procTitle=document.querySelector('#procSection .res-blk-ttl');
+  if(procTitle)procTitle.textContent=t('proc_changes');
+  const adpTitle=document.querySelector('#adpSection .res-blk-ttl');
+  if(adpTitle)adpTitle.textContent=t('coil_perf');
+
+  // About section
+  const aboutH1=document.querySelector('.about-h1');
+  if(aboutH1)aboutH1.textContent=t('about_title');
+
+  // metaProcs
+  const mp=document.getElementById('metaProcs');
+  if(mp&&(mp.textContent==='No processes'||mp.textContent===LANGS[appLang]?.no_processes||
+     Object.values(LANGS).some(l=>l.no_processes===mp.textContent)))
+    mp.textContent=t('no_processes');
+
+  // Update stCoords default text
+  if(stCoords)stCoords.dataset.defaultText=t('hover_chart');
+
+  // Update process block labels for existing blocks
+  document.querySelectorAll('.proc-block').forEach((b,i)=>{
+    const ttl=b.querySelector('[id$="-ttl"]');
+    if(ttl){
+      // Only update if it looks like an untranslated default (starts with Process/Proses/etc)
+      const isDefaultTitle=Object.values(LANGS).some(l=>ttl.textContent.startsWith(l.process+' '));
+      if(isDefaultTitle)ttl.textContent=t('process')+' '+(i+1);
+    }
+    const calcBtn=b.querySelector('[id$="-calc"]');
+    if(calcBtn&&!calcBtn.style.display.includes('none'))
+      calcBtn.textContent=t('calculate');
+    const sdivs=b.querySelectorAll('.sdiv');
+    sdivs.forEach(s=>{
+      const isProcessType=Object.values(LANGS).some(l=>s.textContent===l.select_type||s.textContent==='Process Type'||s.textContent==='Prozesstyp'||s.textContent==='Type de processus');
+      // Leave dynamic sdivs alone — they're set per process type
+    });
+  });
+  saveSession();
+}
+
+function selLang(l){
+  appLang=l;
+  const sel=document.getElementById('wm-lang-select');
+  if(sel)sel.value=l;
+  applyLang();
+}
+
+function toggleFlowUnit(){
+  const u=unitSys==='imperial'?['cfm','m3s']:['m3s','m3hr'];
+  flowUnit=u[(u.indexOf(flowUnit)+1)%u.length];
+  const L={m3s:'m³/s',m3hr:'m³/hr',cfm:'CFM'};
+  document.getElementById('flowUnitBtn').textContent=L[flowUnit];
+  saveSession();
+}
+function getFlowKgS(v,T){
+  const rho=1.204*(getP()/101.325)*(293/(T+273));
+  if(flowUnit==='m3s')return v*rho;
+  if(flowUnit==='m3hr')return(v/3600)*rho;
+  if(flowUnit==='cfm')return(v*0.000471947)*rho;
+  return v*rho;
+}
+
+// ════════════════════════════════════════════════════════════
+// PSYCHROMETRIC ENGINE — ASHRAE
+// ════════════════════════════════════════════════════════════
+function getP(){return parseFloat(document.getElementById('atmP')?.value||101.3);}
+
+function satPws(T){
+  if(T>=0){const K=T+273.15;return Math.exp(-5.8002206e3/K+1.3914993-4.8640239e-2*K+4.1764768e-5*K*K-1.4452093e-8*K*K*K+6.5459673*Math.log(K))/1000;}
+  const K=T+273.15;return Math.exp(-5.6745359e3/K+6.3925247-9.677843e-3*K+6.2215701e-7*K*K+2.0747825e-9*K*K*K-9.484024e-13*K*K*K*K+4.1635019*Math.log(K))/1000;
+}
+function wFromRH(T,RH){const P=getP(),Pws=satPws(T);return 0.621945*(RH/100*Pws)/(P-RH/100*Pws);}
+function wFromWB(T,WB){const P=getP(),Pws_wb=satPws(WB),W_wb=0.621945*Pws_wb/(P-Pws_wb);return((2501-2.381*WB)*W_wb-1.006*(T-WB))/(2501+1.86*T-4.186*WB);}
+function wFromDP(dp){const P=getP(),Pws=satPws(dp);return 0.621945*Pws/(P-Pws);}
+function rhFromW(T,W){const P=getP(),Pws=satPws(T),Pw=W*P/(0.621945+W);return Math.min(100,Math.max(0,Pw/Pws*100));}
+function enth(T,W){return 1.006*T+W*(2501+1.86*T);}
+function sVol(T,W){return 0.287042*(T+273.15)*(1+1.6078*W)/getP();}
+function vPres(W){return W*getP()/(0.621945+W);}
+function dewPt(T,RH){if(RH<=0)return-99;const a=17.27,b=237.3,al=a*T/(b+T)+Math.log(RH/100);return b*al/(a-al);}
+function wetBulb(T,W){let wb=T*(0.4+0.6*Math.min(1,Math.max(0,W*50)));for(let i=0;i<400;i++){const d=wFromWB(T,wb)-W;if(Math.abs(d)<1e-8)break;wb-=d*35;if(wb>T)wb=T-0.001;if(wb<-99){wb=-99;break;}}return wb;}
+function calcState(T,W){const RH=rhFromW(T,W),h=enth(T,W),v=sVol(T,W),pv=vPres(W),dp=dewPt(T,RH),wb=wetBulb(T,W);return{T,W,RH,h,v,pv,dp,wb};}
+
+// SA Cities
+const CITIES={jhb:{e:1753,n:'Johannesburg / Pretoria'},cpt:{e:42,n:'Cape Town'},
+  dbn:{e:8,n:'Durban'},blm:{e:1395,n:'Bloemfontein'},gqe:{e:60,n:'Gqeberha'},
+  kim:{e:1197,n:'Kimberley'},eln:{e:130,n:'East London'},ptb:{e:1230,n:'Polokwane'}};
+
+function loadCity(k){
+  const c=CITIES[k];if(!c)return;
+  document.getElementById('elevation').value=c.e;
+  // Use a fixed W-axis for all cities — no rescaling.
+  // Only nudge T-axis min so the bottom of the saturation curve stays visible.
+  // High-altitude cities have a lower saturation curve so we tighten the T-min slightly.
+  const tMin=c.e>1500?-10:c.e>800?-12:-15;
+  CR.Tmin=tMin;
+  document.getElementById('rngTmin').value=tMin;
+  updateAtmP();showToast(`${c.n} loaded`);
+}
+function updateAtmP(){
+  const e=parseFloat(document.getElementById('elevation').value||0);
+  const P=101.325*Math.pow(1-2.26e-5*e,5.256);
+  document.getElementById('atmP').value=P.toFixed(2);
+  const _mel=document.getElementById('metaElev');if(_mel)_mel.textContent=e>0?`${e}m ASL`:'Sea level';
+  const _mp=document.getElementById('metaP');if(_mp)_mp.textContent=`P = ${P.toFixed(1)} kPa`;
+  recalcAll();
+}
+
+function recalcAll(){
+  // Re-run all calculated process blocks silently (pressure/elevation changed)
+  // This updates state points (T, W) since W is pressure-dependent
+  const blocks=document.querySelectorAll('.proc-block');
+  blocks.forEach(bl=>{
+    const id=bl.id;
+    const proc=procs.find(p=>p.blockId===id);
+    if(proc&&proc.endState) calcBlock(id, true);
+  });
+  // Refresh p0 from first process startState if available (preserve T,W coords)
+  if(procs.length>0&&procs[0].startState){
+    p0={...procs[0].startState,label:'P0',color:'#0A8C7E'};
+  }
+  redraw();updateResults();updateProcCount();saveSession();
+}
+
+function recalcFlow(){
+  // Airflow changed — only kW values change, not state points (T, W, RH)
+  // Re-run calcBlock silently to update duty values without touching p0
+  const blocks=document.querySelectorAll('.proc-block');
+  blocks.forEach(bl=>{
+    const id=bl.id;
+    const proc=procs.find(p=>p.blockId===id);
+    if(proc&&proc.endState) calcBlock(id, true);
+  });
+  redraw();updateResults();saveSession();
+}
+function updateP0Unit(){
+  const u={rh:'%',wb:'°C',hr:'g/kg',dp:'°C'};
+  document.getElementById('p0unit').textContent=u[document.getElementById('p0type').value]||'%';
+}
+
+// ════════════════════════════════════════════════════════════
+// APP STATE
+// ════════════════════════════════════════════════════════════
+let p0=null;
+let procs=[];
+let undo=[];
+
+const PCOLS={cool:'#1A96D4',heat:'#EA580C',humid:'#0284C7',
+             evap:'#059669',hrv:'#6366F1',mix:'#7C3AED',custom:'#527290'};
+const PNAMES={cool:'Cooling & Dehumid.',heat:'Sensible Heating',
+              humid:'Humidification',evap:'Evaporative Cooling',
+              hrv:'Heat Exchanger',mix:'Return Air Mix',custom:'Custom'};
+const PICS={cool:'❄️',heat:'🔥',humid:'💧',evap:'🌬️',hrv:'⇄',mix:'⊕',custom:'✏️'};
+
+function solveP0(){
+  const T=parseFloat(document.getElementById('p0db').value);
+  const t2=document.getElementById('p0type').value;
+  const v2=parseFloat(document.getElementById('p0val').value);
+  let W;
+  if(t2==='rh')W=wFromRH(T,v2);
+  else if(t2==='wb')W=wFromWB(T,v2);
+  else if(t2==='hr')W=v2/1000;
+  else if(t2==='dp')W=wFromDP(v2);
+  if(isNaN(W)||W<0||W>wFromRH(T,100))return null;
+  return calcState(T,W);
+}
+
+function setP0(){
+  const st=solveP0();
+  if(!st){showToast('Invalid starting conditions');return;}
+  p0={...st,label:'P0',color:'#0A8C7E'};
+  document.getElementById('p0result').innerHTML=`
+    <div class="al al-o" style="font-size:9px;padding:5px 8px">
+      <span>✓</span><span>P0 set: ${st.T.toFixed(1)}°C DB · ${st.RH.toFixed(0)}% RH · ${(st.W*1000).toFixed(2)} g/kg · h = ${st.h.toFixed(1)} kJ/kg</span>
+    </div>`;
+  document.getElementById('chartEmpty').style.display='none';
+  document.getElementById('addProcBtn').style.display='flex';
+  redraw();updateResults();saveSession();
+  showToast('Starting conditions set — add a process below');
+}
+
+function getLastEnd(){
+  for(let i=procs.length-1;i>=0;i--){if(procs[i].endState)return procs[i].endState;}
+  return p0;
+}
+
+// ════════════════════════════════════════════════════════════
+// PROCESS BLOCKS IN SIDEBAR
+// ════════════════════════════════════════════════════════════
+let blockCount=0;
+
+function addProcBlock(){
+  const id='pb'+(++blockCount);
+  const lastEnd=getLastEnd();
+  const dDB=lastEnd?lastEnd.T.toFixed(1):'30';
+  const dRH=lastEnd?lastEnd.RH.toFixed(0):'50';
+  const hasLast=!!lastEnd;
+  const n=document.querySelectorAll('.proc-block').length+1;
+
+  const div=document.createElement('div');
+  div.className='proc-block';div.id=id;
+  div.innerHTML=buildBlockHTML(id,n,dDB,dRH,hasLast);
+
+  // Collapse all already-calculated blocks before adding new one
+  collapseAllBlocks();
+  document.getElementById('procBlocks').appendChild(div);
+  // Scroll new block into view
+  setTimeout(()=>div.scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+  updateProcCount();
+}
+
+function buildBlockHTML(id,n,dDB,dRH,hasLast){
+  return `
+    <div class="pb-hdr" onclick="toggleBlock('${id}')">
+      <div class="pb-color-strip" id="${id}-strip"></div>
+      <div class="pb-num" id="${id}-num">${n}</div>
+      <div class="pb-info">
+        <div class="pb-title" id="${id}-ttl">Process ${n}</div>
+        <div class="pb-sub" id="${id}-sub">Select type below</div>
+      </div>
+      <span class="pb-route" id="${id}-route"></span>
+      <span class="pb-chevron" id="${id}-chev">▾</span>
+      <button class="pb-del" onclick="event.stopPropagation();delBlock('${id}')" title="Remove">×</button>
+    </div>
+    <div class="pb-body">
+      ${hasLast?`<div class="al al-i" style="font-size:11px;padding:5px 9px;margin-bottom:7px"><span>↑</span><span>Start from previous process end state. Edit to override.</span></div>`:''}
+      <div class="r2" style="margin-bottom:6px">
+        <div class="fg">
+          <label class="fl">Start DB (°C)</label>
+          <input type="number" id="${id}-db" value="${dDB}" step="0.5">
+        </div>
+        <div class="fg">
+          <label class="fl">
+            <select id="${id}-pt" onchange="upP2U('${id}')" style="border:none;background:transparent;padding:0;height:auto;font-size:9px;font-weight:600;color:var(--ink2);width:auto;cursor:pointer;display:inline">
+              <option value="rh">RH (%)</option>
+              <option value="wb">WB (°C)</option>
+              <option value="hr">W (g/kg)</option>
+              <option value="dp">DP (°C)</option>
+            </select>
+          </label>
+          <div class="iu">
+            <input type="number" id="${id}-pv" value="${dRH}" step="0.5">
+            <span class="utag" id="${id}-pu">%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sdiv">Process Type</div>
+      <div class="pt-grid" id="${id}-tg">
+        ${Object.keys(PCOLS).map(t=>`
+          <button class="pt-btn" id="${id}-t-${t}" style="--pc:${PCOLS[t]};--prgb:${hexRGB(PCOLS[t])}" onclick="selPType('${id}','${t}')">
+            <div class="pt-ic">${PICS[t]}</div>
+            <div class="pt-lb">${shortName(t)}</div>
+          </button>`).join('')}
+      </div>
+      <div id="${id}-params" style="display:none"></div>
+      <button class="btn btn-p btn-f" id="${id}-calc" onclick="calcBlock('${id}')" style="display:none">Calculate →</button>
+    </div>`;
+}
+
+function shortName(t){
+  const m={cool:'Cooling',heat:'Heating',humid:'Humidify',
+           evap:'Evap. Cool',hrv:'Heat Exch.',mix:'RA Mix',custom:'Custom'};
+  return m[t]||t;
+}
+
+function hexRGB(h){
+  const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);
+  return`${r},${g},${b}`;
+}
+
+function upP2U(id){
+  const u={rh:'%',wb:'°C',hr:'g/kg',dp:'°C'};
+  document.getElementById(`${id}-pu`).textContent=u[document.getElementById(`${id}-pt`).value]||'%';
+}
+
+function delBlock(id){
+  pushUndo();
+  document.getElementById(id)?.remove();
+  procs=procs.filter(p=>p.blockId!==id);
+  renumBlocks();updateProcCount();updateResults();redraw();saveSession();
+  showToast('Process removed');
+}
+
+function renumBlocks(){
+  document.querySelectorAll('.proc-block').forEach((b,i)=>{
+    const numEl=b.querySelector('[id$="-num"]')||b.querySelector('.pb-num');
+    if(numEl)numEl.textContent=i+1;
+    // Only reset title if the block hasn't been calculated (no color = not calculated)
+    const strip=b.querySelector('.pb-color-strip');
+    const hasCalc=strip&&strip.style.background&&strip.style.background!==''&&strip.style.background!=='var(--brd)';
+    if(!hasCalc){
+      const t=b.querySelector('[id$="-ttl"]');
+      if(t&&t.textContent.startsWith('Process '))t.textContent=`Process ${i+1}`;
+    }
+  });
+}
+
+function selPType(id,type){
+  document.querySelectorAll(`#${id}-tg .pt-btn`).forEach(b=>b.classList.remove('on'));
+  document.getElementById(`${id}-t-${type}`)?.classList.add('on');
+  const pp=document.getElementById(`${id}-params`);
+  pp.style.display='block';
+  pp.innerHTML=buildParams(id,type);
+  document.getElementById(`${id}-calc`).style.display='flex';
+  document.getElementById(`${id}-calc`).style.background=PCOLS[type];
+  document.getElementById(`${id}-ttl`).textContent=`${PICS[type]} ${PNAMES[type]}`;
+  document.getElementById(`${id}-ttl`).style.color=PCOLS[type];
+  document.getElementById(`${id}-sub`).textContent='Enter parameters below';
+  const ex=procs.find(p=>p.blockId===id);
+  if(ex)ex.type=type;else procs.push({blockId:id,type,startState:null,endState:null});
+}
+
+function buildParams(id,type){
+  let h=`<div class="sdiv" style="color:${PCOLS[type]}">End Conditions</div>`;
+  if(type==='cool'){
+    h+=`<div class="r2">
+      <div class="fg"><label class="fl">Leaving DB (°C)</label><input type="number" id="${id}-edb" value="13" step="0.5"></div>
+      <div class="fg"><label class="fl">Leaving RH (%)</label><input type="number" id="${id}-erh" value="95" step="1" min="1" max="100"></div>
+    </div><div class="al al-i" style="font-size:11px;padding:5px 9px"><span>ℹ</span><span>95% RH is typical for cooling coil leaving air</span></div>`;
+  }else if(type==='heat'){
+    h+=`<div class="fg"><label class="fl">Leaving DB (°C)</label><input type="number" id="${id}-edb" value="22" step="0.5"></div>`;
+  }else if(type==='humid'){
+    h+=`<div class="r2">
+      <div class="fg"><label class="fl">Target RH (%)</label><input type="number" id="${id}-trh" value="60" step="1" min="1" max="99"></div>
+      <div class="fg"><label class="fl">Type</label><select id="${id}-ht"><option value="steam">Steam (isothermal)</option><option value="adiabatic">Adiabatic (evap.)</option></select></div>
+    </div>`;
+  }else if(type==='evap'){
+    h+=`<div class="fg"><label class="fl">Saturation Efficiency (%)</label><input type="number" id="${id}-eff" value="85" step="1" min="10" max="100"></div>
+    <div class="al al-i" style="font-size:11px;padding:5px 9px"><span>ℹ</span><span>Follows constant WB line. Typical 70–90%</span></div>`;
+  }else if(type==='hrv'){
+    h+=`<div class="r2">
+      <div class="fg"><label class="fl">Exhaust DB (°C)</label><input type="number" id="${id}-exdb" value="22" step="0.5"></div>
+      <div class="fg"><label class="fl">Exhaust RH (%)</label><input type="number" id="${id}-exrh" value="50" step="1"></div>
+    </div>
+    <div class="fg"><label class="fl">Heat Exchanger Efficiency (%)</label><input type="number" id="${id}-eff" value="70" step="1" min="10" max="95"></div>`;
+  }else if(type==='mix'){
+    h+=`<div class="al al-i" style="font-size:11px;padding:5px 9px"><span>⨁</span><span>Enter return air conditions and outside air fraction</span></div>
+    <div class="r2">
+      <div class="fg"><label class="fl">Return Air DB (°C)</label><input type="number" id="${id}-radb" value="22" step="0.5"></div>
+      <div class="fg"><label class="fl">Return Air RH (%)</label><input type="number" id="${id}-rarh" value="50" step="1"></div>
+    </div>
+    <div class="fg"><label class="fl">Outside Air Fraction (%)</label><input type="number" id="${id}-oaf" value="20" step="5" min="0" max="100"></div>`;
+  }else if(type==='custom'){
+    h+=`<div class="r2">
+      <div class="fg"><label class="fl">Leaving DB (°C)</label><input type="number" id="${id}-edb" value="18" step="0.5"></div>
+      <div class="fg"><label class="fl">Leaving RH (%)</label><input type="number" id="${id}-erh" value="60" step="1" min="1" max="100"></div>
+    </div>
+    <div class="fg"><label class="fl">Description</label><input type="text" id="${id}-desc" placeholder="e.g. Cooling coil + reheat"></div>`;
+  }
+  return h;
+}
+
+// ════════════════════════════════════════════════════════════
+// CALCULATIONS
+// ════════════════════════════════════════════════════════════
+function calcBlock(id, silent=false){
+  if(!silent) pushUndo();
+  const proc=procs.find(p=>p.blockId===id);
+  if(!proc){showToast('Select a process type first');return;}
+  const sDB=parseFloat(document.getElementById(`${id}-db`).value);
+  const p2t=document.getElementById(`${id}-pt`).value;
+  const p2v=parseFloat(document.getElementById(`${id}-pv`).value);
+  const flowVal=parseFloat(document.getElementById('sysFlow')?.value)||1;
+  let startW;
+  if(p2t==='rh')startW=wFromRH(sDB,p2v);
+  else if(p2t==='wb')startW=wFromWB(sDB,p2v);
+  else if(p2t==='hr')startW=p2v/1000;
+  else if(p2t==='dp')startW=wFromDP(p2v);
+  if(isNaN(startW)||startW<0||startW>wFromRH(sDB,100)){showToast('Invalid starting conditions');return;}
+  const startState=calcState(sDB,startW);
+  const type=proc.type;
+  let endState=null,pd={};
+  try{
+    if(type==='cool'||type==='custom'){
+      const eDB=parseFloat(document.getElementById(`${id}-edb`).value);
+      const eRH=parseFloat(document.getElementById(`${id}-erh`).value);
+      endState=calcState(eDB,wFromRH(eDB,eRH));
+      if(type==='cool'){
+        const sl=(endState.W-startState.W)/(endState.T-startState.T);
+        let adpT=endState.T;
+        for(let T=endState.T;T>=-5;T-=0.05){if(endState.W+sl*(T-endState.T)>=wFromRH(T,100)){adpT=T;break;}}
+        const BF=(endState.T-adpT)/(startState.T-adpT);
+        pd={adpT,BF,CF:1-BF};
+      }
+    }else if(type==='heat'){
+      endState=calcState(parseFloat(document.getElementById(`${id}-edb`).value),startState.W);
+    }else if(type==='humid'){
+      const tRH=parseFloat(document.getElementById(`${id}-trh`).value);
+      if(document.getElementById(`${id}-ht`).value==='steam'){
+        endState=calcState(startState.T,wFromRH(startState.T,tRH));
+      }else{
+        const wb=startState.wb;let T=startState.T;
+        for(let i=0;i<150;i++){const W2=wFromWB(T,wb),r2=rhFromW(T,W2);if(Math.abs(r2-tRH)<0.05){endState=calcState(T,W2);break;}T-=(r2-tRH)*0.04;}
+        if(!endState)endState=calcState(startState.T-1,wFromRH(startState.T-1,tRH));
+      }
+    }else if(type==='evap'){
+      const eff=parseFloat(document.getElementById(`${id}-eff`).value)/100;
+      const wb=startState.wb,eT=startState.T-eff*(startState.T-wb);
+      endState=calcState(eT,wFromWB(eT,wb));
+    }else if(type==='hrv'){
+      const exDB=parseFloat(document.getElementById(`${id}-exdb`).value);
+      const exRH=parseFloat(document.getElementById(`${id}-exrh`).value);
+      const eff=parseFloat(document.getElementById(`${id}-eff`).value)/100;
+      const exW=wFromRH(exDB,exRH),exH=enth(exDB,exW);
+      const eH=startState.h+(exH-startState.h)*eff,eW=startState.W+(exW-startState.W)*eff;
+      endState=calcState((eH-2501*eW)/(1.006+1.86*eW),eW);
+    }else if(type==='mix'){
+      const raDB=parseFloat(document.getElementById(`${id}-radb`).value);
+      const raRH=parseFloat(document.getElementById(`${id}-rarh`).value);
+      const oaF=parseFloat(document.getElementById(`${id}-oaf`).value)/100;
+      const raW=wFromRH(raDB,raRH),raState=calcState(raDB,raW);
+      const mW=oaF*startState.W+(1-oaF)*raW,mH=oaF*startState.h+(1-oaF)*raState.h;
+      endState=calcState((mH-2501*mW)/(1.006+1.86*mW),mW);
+      pd={raState,oaF};
+    }
+  }catch(e){showToast('Calculation error');return;}
+  if(!endState){showToast('Calculation failed — check inputs');return;}
+  // P0 always mirrors the first process's start state
+  const allBlocks=[...document.querySelectorAll('.proc-block')];
+  const isFirst=allBlocks.length>0&&allBlocks[0].id===id;
+  if(!p0||isFirst){
+    p0={...startState,label:'P0',color:'#0A8C7E'};
+    if(!silent){document.getElementById('p0result').innerHTML=`
+      <div class="al al-o" style="font-size:9px;padding:5px 8px">
+        <span>✓</span><span>P0: ${startState.T.toFixed(1)}°C DB · ${startState.RH.toFixed(0)}% RH · h = ${startState.h.toFixed(1)} kJ/kg</span>
+      </div>`;}
+  }
+  const fKgS=getFlowKgS(flowVal,startState.T);
+  const dT=endState.T-startState.T,dW=(endState.W-startState.W)*1000,dh=endState.h-startState.h;
+  const qT=fKgS*Math.abs(dh),qS=fKgS*1.006*Math.abs(dT),qL=fKgS*2501*Math.abs(endState.W-startState.W);
+  const shr=Math.abs(dh)>0.001?qS/(fKgS*Math.abs(dh)):1;
+  Object.assign(proc,{startState,endState,flowKgS:fKgS,dT,dW,dh,qTotal:qT,qSens:qS,qLat:qL,shr,color:PCOLS[type],name:PNAMES[type],pd});
+  // Update block header with result summary (don't collapse — user collapses via Add Process)
+  document.getElementById(`${id}-sub`).textContent=`${qT.toFixed(1)} kW · SHR ${(shr*100).toFixed(0)}%`;
+  document.getElementById(`${id}-ttl`).textContent=`${PICS[type]} ${PNAMES[type]}`;
+  document.getElementById(`${id}-ttl`).style.color=PCOLS[type];
+  const stripEl=document.getElementById(`${id}-strip`);
+  if(stripEl)stripEl.style.background=PCOLS[type];
+  if(!silent){redraw();updateResults();updateProcCount();saveSession();showToast(`${PNAMES[type]} — ${qT.toFixed(1)} kW`);}
+}
+
+// ════════════════════════════════════════════════════════════
+// RESULTS TABLES
+// ════════════════════════════════════════════════════════════
+function updateResults(){
+  const calcProcs=procs.filter(p=>p.endState);
+  const sec=document.getElementById('resultsSection');
+  if(!p0&&calcProcs.length===0){sec.style.display='none';return;}
+  sec.style.display='block';
+
+  // Build all points
+  const pts=[];
+  if(p0)pts.push({label:'P0 — Start',state:p0,color:'#0A8C7E'});
+  calcProcs.forEach((p,i)=>pts.push({label:`P${i+1} — ${p.name}`,state:p.endState,color:p.color}));
+
+  // Point values table
+  const ptBody=document.getElementById('ptTbody');
+  ptBody.innerHTML=pts.map(pt=>`
+    <tr>
+      <td><span class="pt-badge"><span class="pt-dot" style="background:${pt.color}"></span>${pt.label}</span></td>
+      <td>${pt.state.T.toFixed(1)}</td>
+      <td>${pt.state.wb.toFixed(1)}</td>
+      <td>${pt.state.dp.toFixed(1)}</td>
+      <td>${pt.state.RH.toFixed(1)}</td>
+      <td>${(pt.state.W*1000).toFixed(3)}</td>
+      <td>${pt.state.h.toFixed(2)}</td>
+      <td>${pt.state.v.toFixed(4)}</td>
+    </tr>`).join('');
+
+  // Process changes table
+  const procBody=document.getElementById('procTbody');
+  procBody.innerHTML=calcProcs.length===0
+    ?'<tr><td colspan="9" class="res-empty">No processes calculated yet</td></tr>'
+    :calcProcs.map((p,i)=>`
+      <tr>
+        <td><span class="process-badge"><span class="proc-color-bar" style="background:${p.color}"></span>${p.name}</span></td>
+        <td>${p.startState.T.toFixed(1)}→${p.endState.T.toFixed(1)}°C</td>
+        <td class="${p.dT>0.01?'val-up':p.dT<-0.01?'val-dn':''}">${p.dT>0?'+':''}${p.dT.toFixed(1)}</td>
+        <td class="${p.dW>0.01?'val-up':p.dW<-0.01?'val-dn':''}">${p.dW>0?'+':''}${p.dW.toFixed(3)}</td>
+        <td>${p.dh>0?'+':''}${p.dh.toFixed(2)}</td>
+        <td class="val-hi">${p.qTotal.toFixed(1)}</td>
+        <td>${p.qSens.toFixed(1)}</td>
+        <td>${p.qLat.toFixed(1)}</td>
+        <td>${(p.shr*100).toFixed(1)}%</td>
+      </tr>`).join('');
+
+  // ADP table (cooling only)
+  const adpProcs=calcProcs.filter(p=>p.type==='cool'&&p.pd.adpT!==undefined);
+  const adpSec=document.getElementById('adpSection');
+  if(adpProcs.length>0){
+    adpSec.style.display='block';
+    document.getElementById('adpTbody').innerHTML=adpProcs.map((p,i)=>`
+      <tr>
+        <td><span class="process-badge"><span class="proc-color-bar" style="background:${p.color}"></span>${p.name}</span></td>
+        <td><strong>${p.pd.adpT.toFixed(2)}</strong></td>
+        <td>${(p.pd.BF*100).toFixed(1)}%</td>
+        <td>${(p.pd.CF*100).toFixed(1)}%</td>
+        <td style="font-size:10px;color:var(--mu)">${p.pd.BF>0.25?'⚠ High BF — consider more coil rows or reduced face velocity':p.pd.BF<0.05?'✓ Excellent coil contact efficiency':'✔ Acceptable'}</td>
+      </tr>`).join('');
+  }else{adpSec.style.display='none';}
+
+  document.getElementById('rs-sub').textContent=`${pts.length} state points · ${calcProcs.length} processes`;
+}
+
+function updateProcCount(){
+  const calc=procs.filter(p=>p.endState).length;
+  const total=document.querySelectorAll('.proc-block').length;
+  const _mpr=document.getElementById('metaProcs');if(_mpr)_mpr.textContent=calc===0?'No processes':`${calc} process${calc!==1?'es':''}`;
+  document.getElementById('stProcs').textContent=`${calc} processes`;
+  document.getElementById('stPts').textContent=`${p0?calc+1:0} points`;
+}
+
+function saveAppFile(){
+  // Embed current localStorage session into the HTML and download as a new file
+  const sessionData=localStorage.getItem(SK)||'{}';
+  const html=document.documentElement.outerHTML;
+  // Inject a script that restores the session on load
+  const inject=`<script>try{localStorage.setItem('${SK}',${JSON.stringify(sessionData)});}catch(e){}<\/script>`;
+  const patched=html.replace('</head>',inject+'</head>');
+  const blob=new Blob([patched],{type:'text/html'});
+  const a=document.createElement('a');
+  const ts=new Date().toISOString().slice(0,10);
+  a.href=URL.createObjectURL(blob);
+  a.download=`PsychroFlow_${ts}.html`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('App saved — open the downloaded file to restore this session');
+}
+function clearAll(){
+  pushUndo();p0=null;procs=[];
+  document.getElementById('p0result').innerHTML='';
+  document.getElementById('procBlocks').innerHTML='<div style="font-size:10px;color:var(--mu2);text-align:center;padding:12px 0">Add your first process below</div>';
+  document.getElementById('addProcBtn').style.display='flex';
+  document.getElementById('chartEmpty').style.display='none';
+  blockCount=0;updateResults();updateProcCount();redraw();saveSession();
+  showToast('Cleared');
+}
+
+// ════════════════════════════════════════════════════════════
+// CHART RENDERING
+// ════════════════════════════════════════════════════════════
+function getPAD(){
+  const mobile=window.innerWidth<=768;
+  return mobile
+    ? {left:36,right:38,top:12,bottom:28}
+    : {left:56,right:48,top:18,bottom:36};
+}
+// PAD alias — accessed as PAD.left etc throughout code
+const PAD={
+  get left(){return getPAD().left;},
+  get right(){return getPAD().right;},
+  get top(){return getPAD().top;},
+  get bottom(){return getPAD().bottom;}
+};
+let CR={Tmin:-15,Tmax:40,Wmin:0,Wmax:0.030};
+let LY={sat:true,rh:true,wb:true,enth:false,grid:true,labels:true,comfort:false};
+
+function cv(){return document.getElementById('psychroCanvas');}
+function cx(){return cv().getContext('2d');}
+let _canvasDpr=null;
+function cW(){return cv().width/(_canvasDpr||window.devicePixelRatio||1);}
+function cH(){return cv().height/(_canvasDpr||window.devicePixelRatio||1);}
+function toX(T){return PAD.left+(T-CR.Tmin)/(CR.Tmax-CR.Tmin)*(cW()-PAD.left-PAD.right);}
+function toY(W){return cH()-PAD.bottom-(W-CR.Wmin)/(CR.Wmax-CR.Wmin)*(cH()-PAD.top-PAD.bottom);}
+function fromX(px){return CR.Tmin+(px-PAD.left)/(cW()-PAD.left-PAD.right)*(CR.Tmax-CR.Tmin);}
+function fromY(py){return CR.Wmin+(cH()-PAD.bottom-py)/(cH()-PAD.top-PAD.bottom)*(CR.Wmax-CR.Wmin);}
+
+function resizeCanvas(){
+  const f=document.getElementById('chartFrame');
+  const c=cv(),dpr=window.devicePixelRatio||1;
+  c.style.width=f.clientWidth+'px';c.style.height=f.clientHeight+'px';
+  c.width=f.clientWidth*dpr;c.height=f.clientHeight*dpr;
+  cx().scale(dpr,dpr);redraw();
+}
+
+function redraw(){
+  const c=cx(),W=cW(),H=cH();
+  c.clearRect(0,0,W,H);
+  c.fillStyle='#FDFCFB';c.fillRect(0,0,W,H);
+  const ag=c.createLinearGradient(PAD.left,PAD.top,W-PAD.right,H-PAD.bottom);
+  ag.addColorStop(0,'rgba(220,235,228,0.28)');ag.addColorStop(1,'rgba(228,240,234,0.14)');
+  c.fillStyle=ag;c.fillRect(PAD.left,PAD.top,W-PAD.left-PAD.right,H-PAD.top-PAD.bottom);
+
+  if(LY.grid){
+    // 1°C hairlines — very faint, no labels
+    c.strokeStyle='rgba(80,105,95,0.22)';c.lineWidth=0.35;
+    for(let T=Math.ceil(CR.Tmin);T<=CR.Tmax;T+=1){
+      if(T%5===0)continue; // 5°C lines drawn separately below
+      c.beginPath();c.moveTo(toX(T),PAD.top);c.lineTo(toX(T),H-PAD.bottom);c.stroke();
+    }
+    // 1 g/kg humidity hairlines
+    for(let w=0.001;w<=CR.Wmax;w+=0.001){
+      if(Math.round(w*1000)%2===0)continue; // 2g/kg lines drawn below
+      c.beginPath();c.moveTo(PAD.left,toY(w));c.lineTo(W-PAD.right,toY(w));c.stroke();
+    }
+    // 5°C medium lines + 2g/kg humidity lines
+    c.strokeStyle='rgba(70,98,88,0.62)';c.lineWidth=0.7;
+    for(let T=Math.ceil(CR.Tmin/5)*5;T<=CR.Tmax;T+=5){
+      if(T%10===0)continue; // 10°C lines drawn below
+      c.beginPath();c.moveTo(toX(T),PAD.top);c.lineTo(toX(T),H-PAD.bottom);c.stroke();
+    }
+    for(let w=0;w<=CR.Wmax;w+=0.002){
+      if(Math.round(w*1000)%10===0)continue;
+      c.beginPath();c.moveTo(PAD.left,toY(w));c.lineTo(W-PAD.right,toY(w));c.stroke();
+    }
+    // 10°C major lines + 10g/kg major humidity lines — darkest
+    c.strokeStyle='rgba(55,82,72,0.80)';c.lineWidth=1.2;
+    for(let T=Math.ceil(CR.Tmin/10)*10;T<=CR.Tmax;T+=10){c.beginPath();c.moveTo(toX(T),PAD.top);c.lineTo(toX(T),H-PAD.bottom);c.stroke();}
+    for(let w=0;w<=CR.Wmax;w+=0.010){c.beginPath();c.moveTo(PAD.left,toY(w));c.lineTo(W-PAD.right,toY(w));c.stroke();}
+  }
+
+  // (enthalpy drawn after saturation curve — see below)
+
+  if(LY.wb){
+    c.setLineDash([3,5]);
+    for(let wb=Math.ceil(CR.Tmin/5)*5;wb<=CR.Tmax;wb+=5){
+      c.strokeStyle=wb===0?'rgba(8,100,90,0.70)':'rgba(18,118,106,0.38)';
+      c.lineWidth=wb===0?1.8:0.9;
+      c.beginPath();let f=true;
+      for(let T=Math.max(wb,CR.Tmin);T<=CR.Tmax;T+=0.3){
+        const Wv=wFromWB(T,wb);
+        if(Wv<0||Wv>CR.Wmax||Wv>wFromRH(T,100)+0.0001){f=true;continue;}
+        f?c.moveTo(toX(T),toY(Math.min(Wv,CR.Wmax))):c.lineTo(toX(T),toY(Math.min(Wv,CR.Wmax)));f=false;
+      }c.stroke();
+      if(LY.labels&&wb>CR.Tmin&&wb<=CR.Tmax){
+        const Ws=wFromRH(wb,100);
+        if(Ws<=CR.Wmax){c.fillStyle='rgba(8,95,86,0.72)';c.font='bold 9px DM Sans,sans-serif';c.textAlign='right';c.fillText(`${wb}°`,toX(wb)-3,toY(Ws)+9);}
+      }
+    }c.setLineDash([]);
+  }
+
+  if(LY.rh){
+    [10,20,30,40,50,60,70,80,90].forEach(rh=>{
+      const mj=[25,50,75].includes(rh);
+      c.strokeStyle=mj?'rgba(10,110,100,0.70)':'rgba(14,120,108,0.38)';
+      c.lineWidth=mj?1.8:1.0;c.setLineDash([]);
+      c.beginPath();let f=true;
+      for(let T=CR.Tmin;T<=CR.Tmax;T+=0.3){
+        const Wv=wFromRH(T,rh);if(Wv<0||Wv>CR.Wmax){f=true;continue;}
+        f?c.moveTo(toX(T),toY(Wv)):c.lineTo(toX(T),toY(Wv));f=false;
+      }c.stroke();
+      if(LY.labels){
+        // Find where the RH curve exits the right edge of the plot (at T=Tmax)
+        // If it exits through the top (W=Wmax), walk left to find exit point
+        const rightEdgeW=wFromRH(CR.Tmax,rh);
+        let labelY;
+        if(rightEdgeW>0&&rightEdgeW<=CR.Wmax){
+          // Curve exits through right edge at T=Tmax
+          labelY=toY(rightEdgeW);
+        } else {
+          // Curve exits through top — find T where W = Wmax
+          let exitT=CR.Tmax;
+          for(let t=CR.Tmin;t<=CR.Tmax;t+=0.3){
+            if(wFromRH(t,rh)>=CR.Wmax*0.998){exitT=t;break;}
+          }
+          labelY=PAD.top+6;
+        }
+        // Place label just inside the right border of the chart
+        const labelX=cW()-PAD.right-4;
+        if(labelY>PAD.top+4&&labelY<cH()-PAD.bottom-4){
+          c.fillStyle=`rgba(10,100,90,${mj?0.85:0.55})`;
+          c.font=`${mj?'bold 10px':'9px'} DM Sans,sans-serif`;
+          c.textAlign='right';
+          c.fillText(`${rh}%`,labelX,labelY+4);
+        }
+      }
+    });
+  }
+
+  if(LY.comfort){
+    c.fillStyle='rgba(5,150,105,0.07)';c.strokeStyle='rgba(5,150,105,0.35)';
+    c.lineWidth=1;c.setLineDash([4,4]);
+    c.beginPath();c.moveTo(toX(20),toY(wFromRH(20,30)));c.lineTo(toX(26),toY(wFromRH(26,30)));
+    c.lineTo(toX(26),toY(wFromRH(26,55)));c.lineTo(toX(20),toY(wFromRH(20,55)));
+    c.closePath();c.fill();c.stroke();c.setLineDash([]);
+    if(LY.labels){c.fillStyle='rgba(5,120,80,0.5)';c.font='8px DM Sans,sans-serif';c.textAlign='center';c.fillText('Comfort Zone',toX(23),toY(wFromRH(23,42))-4);}
+  }
+
+  // Saturation curve
+  c.beginPath();let f=true;
+  for(let T=CR.Tmin;T<=CR.Tmax;T+=0.2){const Wv=wFromRH(T,100);if(Wv>CR.Wmax)break;f?c.moveTo(toX(T),toY(Wv)):c.lineTo(toX(T),toY(Wv));f=false;}
+  c.lineTo(toX(CR.Tmax),toY(CR.Wmax));c.lineTo(toX(CR.Tmin),toY(CR.Wmax));c.closePath();
+  const sg=c.createLinearGradient(PAD.left,PAD.top,PAD.left,H-PAD.bottom);
+  sg.addColorStop(0,'rgba(2,100,55,0.07)');sg.addColorStop(1,'rgba(7,85,150,0.04)');
+  c.fillStyle=sg;c.fill();
+  c.strokeStyle='#111416';c.lineWidth=3.5;c.setLineDash([]);
+  c.shadowColor='rgba(10,20,18,0.20)';c.shadowBlur=3;
+  c.beginPath();f=true;
+  for(let T=CR.Tmin;T<=CR.Tmax;T+=0.2){const Wv=wFromRH(T,100);if(Wv>CR.Wmax)break;f?c.moveTo(toX(T),toY(Wv)):c.lineTo(toX(T),toY(Wv));f=false;}
+  c.stroke();c.shadowColor='transparent';c.shadowBlur=0;
+  if(LY.labels){c.fillStyle='#1A3232';c.font='bold 10px DM Sans,sans-serif';c.textAlign='left';c.fillText('100% RH',toX(CR.Tmin+3)+5,toY(wFromRH(CR.Tmin+3,100))-5);}
+  // Enthalpy lines + labels — drawn AFTER saturation fill so labels visible
+  if(LY.enth){
+    c.setLineDash([4,7]);
+    for(let hv=-10;hv<=120;hv+=10){
+      c.strokeStyle='rgba(120,80,210,0.40)';c.lineWidth=1.0;
+      c.beginPath();let ef=true;
+      let labelX=null,labelY=null;
+      for(let T=CR.Tmin;T<=CR.Tmax;T+=0.5){
+        const Wv=(hv-1.006*T)/(2501+1.86*T);
+        if(Wv<0||Wv>CR.Wmax||Wv>wFromRH(T,100)-0.0001){ef=true;continue;}
+        const px=toX(T),py=toY(Wv);
+        ef?c.moveTo(px,py):c.lineTo(px,py);ef=false;
+        labelX=px;labelY=py; // track last valid point for label
+      }
+      c.stroke();
+      // Label in right margin outside chart box
+      if(LY.labels&&labelX!==null&&labelY!==null&&labelY>PAD.top+2&&labelY<cH()-PAD.bottom-4){
+        c.fillStyle='rgba(90,50,180,0.65)';
+        c.font='italic 9px DM Sans,sans-serif';c.textAlign='left';
+        c.fillText(`${hv}`,cW()-PAD.right+5,labelY+3);
+      }
+    }
+    c.setLineDash([]);
+  }
+
+  c.strokeStyle='rgba(90,100,90,0.45)';c.lineWidth=1.5;
+  c.strokeRect(PAD.left,PAD.top,W-PAD.left-PAD.right,H-PAD.top-PAD.bottom);
+
+  if(LY.labels){
+    const mob=window.innerWidth<=768;
+    const tickStep=mob?10:5; // fewer tick labels on mobile
+    c.fillStyle='#2C3035';c.font=`600 ${mob?10:12.5}px DM Sans,sans-serif`;c.textAlign='center';
+    for(let T=Math.ceil(CR.Tmin/tickStep)*tickStep;T<=CR.Tmax;T+=tickStep)
+      c.fillText(T,toX(T),H-PAD.bottom+11);
+    if(!mob){
+      c.fillStyle='#1A1C1E';c.font='700 13px DM Sans,sans-serif';
+      c.fillText('Dry Bulb Temperature (°C)',PAD.left+(W-PAD.left-PAD.right)/2,H-4);
+    }
+    c.textAlign='right';c.fillStyle='#2C3035';c.font=`600 ${mob?9:12.5}px DM Sans,sans-serif`;
+    const wStep=mob?0.004:0.002; // every 4g/kg on mobile
+    for(let w=0;w<=CR.Wmax;w+=wStep)c.fillText((w*1000).toFixed(0),PAD.left-3,toY(w)+3.5);
+    if(!mob){
+      c.save();c.translate(13,H/2);c.rotate(-Math.PI/2);c.textAlign='center';
+      c.fillStyle='#1A1C1E';c.font='700 13px DM Sans,sans-serif';
+      c.fillText('Humidity Ratio  W (g/kg da)',0,0);c.restore();
+    }
+    c.textAlign='left';c.fillStyle='rgba(30,50,50,0.65)';c.font='600 10px DM Sans,sans-serif';
+    c.fillText(`P = ${getP().toFixed(1)} kPa`,PAD.left+5,PAD.top+12);
+  }
+
+  // Draw processes
+  const allPts=[];
+  if(p0)allPts.push({state:p0,label:'P0',color:'#0A8C7E',name:'Start'});
+  procs.forEach((proc,pi)=>{
+    if(!proc.startState||!proc.endState)return;
+
+    // If this process's start state doesn't match the last point in allPts,
+    // it's an independent / disconnected start — add it as its own labeled point
+    const lastPt=allPts.length>0?allPts[allPts.length-1]:null;
+    const startMatchesLast=lastPt&&
+      Math.abs(lastPt.state.T-proc.startState.T)<0.05&&
+      Math.abs(lastPt.state.W-proc.startState.W)<0.00005;
+    if(!startMatchesLast&&proc.type!=='mix'){
+      // Orphan start — give it a distinct label (e.g. "S2" for start of process 2)
+      allPts.push({state:proc.startState,label:`S${pi+1}`,color:proc.color,name:`Start P${pi+1}`});
+    }
+
+    allPts.push({state:proc.endState,label:`P${pi+1}`,color:proc.color,name:proc.name});
+
+    // For air mix: add OA and RA as extra labeled points, draw dashed RA→mixed line
+    if(proc.type==='mix'&&proc.pd&&proc.pd.raState){
+      const oa=proc.startState; // OA = this process's start state (outside air)
+      const ra=proc.pd.raState; // RA = return air
+      const mx2=proc.endState;  // mixed result
+      // OA point
+      allPts.push({state:oa,label:'OA',color:'#D97706',name:'Outside Air'});
+      // RA point
+      allPts.push({state:ra,label:'RA',color:'#059669',name:'Return Air'});
+      // Draw dashed OA→RA line (the mixing axis)
+      const xoa=toX(oa.T),yoa=toY(oa.W),xra=toX(ra.T),yra=toY(ra.W);
+      const xmx=toX(mx2.T),ymx=toY(mx2.W);
+      c.strokeStyle=proc.color;c.lineWidth=1.5;c.setLineDash([5,5]);
+      c.shadowBlur=0;c.beginPath();c.moveTo(xoa,yoa);c.lineTo(xra,yra);c.stroke();
+      c.setLineDash([]);
+      // Solid line from OA to mixed
+      c.lineWidth=2.2;c.shadowColor=proc.color+'25';c.shadowBlur=4;
+      c.beginPath();c.moveTo(xoa,yoa);c.lineTo(xmx,ymx);c.stroke();
+      c.shadowColor='transparent';c.shadowBlur=0;
+      // Arrow at mixed point
+      const ang=Math.atan2(ymx-yoa,xmx-xoa),l=10;
+      c.fillStyle=proc.color;c.beginPath();c.moveTo(xmx,ymx);
+      c.lineTo(xmx-l*Math.cos(ang-0.4),ymx-l*Math.sin(ang-0.4));
+      c.lineTo(xmx-l*Math.cos(ang+0.4),ymx-l*Math.sin(ang+0.4));
+      c.closePath();c.fill();
+      // Label mid-line
+      const lmx=(xoa+xmx)/2,lmy=(yoa+ymx)/2;
+      c.font='bold 9px DM Sans,sans-serif';c.textAlign='center';
+      const tw2=c.measureText('RA Mix').width;
+      c.fillStyle='rgba(255,255,255,0.93)';
+      if(c.roundRect){c.beginPath();c.roundRect(lmx-tw2/2-4,lmy-12,tw2+8,14,3);c.fill();}
+      c.fillStyle=proc.color;c.fillText('RA Mix',lmx,lmy-1);
+      return; // skip standard draw below
+    }
+
+    const p1=proc.startState,p2=proc.endState;
+    const x1=toX(p1.T),y1=toY(p1.W),x2=toX(p2.T),y2=toY(p2.W);
+    if(isNaN(x1)||isNaN(y1)||isNaN(x2)||isNaN(y2))return;
+    c.strokeStyle=proc.color;c.lineWidth=2.2;
+    c.shadowColor=proc.color+'25';c.shadowBlur=4;c.setLineDash([]);
+    c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();
+    c.shadowColor='transparent';c.shadowBlur=0;
+    const ang=Math.atan2(y2-y1,x2-x1),l=10;
+    c.fillStyle=proc.color;c.beginPath();c.moveTo(x2,y2);
+    c.lineTo(x2-l*Math.cos(ang-0.4),y2-l*Math.sin(ang-0.4));
+    c.lineTo(x2-l*Math.cos(ang+0.4),y2-l*Math.sin(ang+0.4));
+    c.closePath();c.fill();
+    const mx=(x1+x2)/2,my=(y1+y2)/2;
+    if(window.innerWidth>768){
+      c.font='bold 9px DM Sans,sans-serif';c.textAlign='center';
+      const tw=c.measureText(PNAMES[proc.type]).width;
+      c.fillStyle='rgba(255,255,255,0.93)';
+      if(c.roundRect){c.beginPath();c.roundRect(mx-tw/2-4,my-12,tw+8,14,3);c.fill();}
+      c.fillStyle=proc.color;c.fillText(PNAMES[proc.type],mx,my-1);
+    }
+  });
+
+  // State points
+  allPts.forEach(pt=>{
+    const{T,W:Wv}=pt.state;
+    if(T<CR.Tmin||T>CR.Tmax||Wv<0||Wv>CR.Wmax)return;
+    const x=toX(T),y=toY(Wv),col=pt.color,sz=6;
+    c.shadowColor=col+'38';c.shadowBlur=6;c.shadowOffsetY=2;
+    c.fillStyle='white';c.beginPath();c.arc(x,y,sz+1.5,0,Math.PI*2);c.fill();
+    c.shadowColor='transparent';c.shadowBlur=0;c.shadowOffsetY=0;
+    c.fillStyle=col;c.beginPath();c.arc(x,y,sz,0,Math.PI*2);c.fill();
+    c.fillStyle='rgba(255,255,255,0.38)';c.beginPath();c.arc(x-1.5,y-1.5,2,0,Math.PI*2);c.fill();
+    c.font='600 10px DM Sans,sans-serif';
+    const tw=c.measureText(pt.label).width,lx=x+sz+5,ly=y-2;
+    c.fillStyle='rgba(255,255,255,0.92)';
+    if(c.roundRect){c.beginPath();c.roundRect(lx-2,ly-10,tw+8,13,3);c.fill();}
+    c.strokeStyle=col+'28';c.lineWidth=1;
+    if(c.roundRect){c.beginPath();c.roundRect(lx-2,ly-10,tw+8,13,3);c.stroke();}
+    c.fillStyle=col;c.textAlign='left';c.fillText(pt.label,lx+2,ly);
+    if(window.innerWidth>768){
+      c.fillStyle='#5A7A96';c.font='9px DM Sans,sans-serif';
+      c.fillText(`${T.toFixed(1)}° ${(Wv*1000).toFixed(1)}g`,lx+2,ly+10);
+    }
+  });
+  window._pts=allPts;
+}
+
+// ════════════════════════════════════════════════════════════
+// CHART EVENTS — hover only, NO scroll zoom
+// ════════════════════════════════════════════════════════════
+function initChartEvents(){
+  const c=cv(),frame=document.getElementById('chartFrame'),tip=document.getElementById('chartTip');
+  c.addEventListener('mousemove',e=>{
+    const rect=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+    const px=(e.clientX-rect.left)*c.width/rect.width/dpr;
+    const py=(e.clientY-rect.top)*c.height/rect.height/dpr;
+    const T=fromX(px),Wv=fromY(py);
+    if(T>=CR.Tmin&&T<=CR.Tmax&&Wv>=0&&Wv<=CR.Wmax&&Wv<=wFromRH(T,100)){
+      const RH=rhFromW(T,Wv),h=enth(T,Wv),wb=wetBulb(T,Wv);
+      document.getElementById('stCoords').textContent=
+        `DB: ${T.toFixed(1)}°C  ·  WB: ${wb.toFixed(1)}°C  ·  RH: ${RH.toFixed(0)}%  ·  W: ${(Wv*1000).toFixed(2)} g/kg  ·  h: ${h.toFixed(1)} kJ/kg`;
+    }
+    const pts=window._pts||[];
+    let near=null,minD=22;
+    pts.forEach(pt=>{
+      if(pt.state.T<CR.Tmin||pt.state.T>CR.Tmax)return;
+      const dx=toX(pt.state.T)-px,dy=toY(pt.state.W)-py,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<minD){minD=d;near=pt;}
+    });
+    if(near){
+      const st=near.state;
+      document.getElementById('tipTtl').textContent=`${near.label} — ${near.name}`;
+      document.getElementById('tipTtl').style.color=near.color;
+      document.getElementById('tp-db').textContent=`${st.T.toFixed(2)} °C`;
+      document.getElementById('tp-wb').textContent=`${st.wb.toFixed(2)} °C`;
+      document.getElementById('tp-rh').textContent=`${st.RH.toFixed(1)} %`;
+      document.getElementById('tp-hr').textContent=`${(st.W*1000).toFixed(3)} g/kg`;
+      document.getElementById('tp-h').textContent=`${st.h.toFixed(2)} kJ/kg`;
+      document.getElementById('tp-dp').textContent=`${st.dp.toFixed(2)} °C`;
+      const ox=e.clientX-frame.getBoundingClientRect().left;
+      const oy=e.clientY-frame.getBoundingClientRect().top;
+      let left=ox+14,top=oy-20;
+      if(left+162>frame.clientWidth)left=ox-162-14;
+      if(top+130>frame.clientHeight)top=frame.clientHeight-140;
+      tip.style.left=left+'px';tip.style.top=top+'px';
+      tip.classList.add('on');frame.style.cursor='pointer';
+    }else{tip.classList.remove('on');frame.style.cursor='default';}
+  });
+  c.addEventListener('mouseleave',()=>{
+    tip.classList.remove('on');
+    const sc=document.getElementById('stCoords');
+    sc.textContent=sc.dataset.defaultText||t('hover_chart');
+  });
+  // NO scroll zoom
+}
+
+function toggleLayer(n){
+  LY[n]=!LY[n];
+  const m={rh:'cfb-rh',wb:'cfb-wb',enth:'cfb-h'};
+  if(m[n])document.getElementById(m[n])?.classList.toggle('on',LY[n]);
+  redraw();saveSession();
+}
+function toggleSet(n,btn){LY[n]=!LY[n];btn.classList.toggle('on',LY[n]);redraw();}
+function openCsm(){document.getElementById('csm').classList.remove('off');}
+function closeCsm(){document.getElementById('csm').classList.add('off');}
+function applyRange(){
+  CR.Tmin=parseFloat(document.getElementById('rngTmin').value)||-15;
+  CR.Tmax=parseFloat(document.getElementById('rngTmax').value)||40;
+  CR.Wmin=(parseFloat(document.getElementById('rngWmin').value)||0)/1000;
+  CR.Wmax=(parseFloat(document.getElementById('rngWmax').value)||26)/1000;
+  redraw();saveSession();
+}
+function zoomIn(){
+  const mT=(CR.Tmin+CR.Tmax)/2,mW=(CR.Wmin+CR.Wmax)/2;
+  const rT=(CR.Tmax-CR.Tmin)*0.7,rW=(CR.Wmax-CR.Wmin)*0.7;
+  CR={Tmin:mT-rT/2,Tmax:mT+rT/2,Wmin:Math.max(0,mW-rW/2),Wmax:mW+rW/2};
+  redraw();
+}
+function zoomReset(){
+  CR={Tmin:-15,Tmax:40,Wmin:0,Wmax:0.030};
+  ['rngTmin','rngTmax','rngWmin','rngWmax'].forEach((id,i)=>
+    {document.getElementById(id).value=['-15','40','0','30'][i];});
+  redraw();
+}
+
+// ════════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════════
+function showTab(n){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.getElementById(`pg-${n}`)?.classList.add('on');
+  document.getElementById(`tab-${n}`)?.classList.add('on');
+  if(n==='report'){const d=document.getElementById('rp-date');if(d&&!d.value)d.value=new Date().toISOString().split('T')[0];}
+}
+
+// ════════════════════════════════════════════════════════════
+// QUICK START WIZARD
+// ════════════════════════════════════════════════════════════
+let wizStep=0;
+const WIZ_TITLES=['Location & Site Conditions','Starting Air Conditions','Select Process Type','Enter Process Parameters'];
+const WIZ_STEPS=4;
+
+function openWiz(){
+  wizStep=0;renderWiz();
+  document.getElementById('qwiz').classList.remove('off');
+}
+function closeWiz(){document.getElementById('qwiz').classList.add('off');}
+
+function renderWiz(){
+  document.getElementById('qwiz-title').textContent=`Step ${wizStep+1} of ${WIZ_STEPS}: ${WIZ_TITLES[wizStep]}`;
+  for(let i=0;i<WIZ_STEPS;i++){
+    document.getElementById(`qs${i}`)?.classList.toggle('done',i<=wizStep);
+  }
+  const content=document.getElementById('qwiz-content');
+  const nav=document.getElementById('q-nav');
+
+  if(wizStep===0){
+    content.innerHTML=`
+      <div class="q-step-lbl">Where is your project located?</div>
+      <div class="fg">
+        <label class="fl">SA City</label>
+        <select id="wz-city" onchange="wzLoadCity(this.value)">
+          <option value="">&#8212; select city &#8212;</option>
+          <option value="jhb">Johannesburg / Pretoria (1753m)</option>
+          <option value="cpt">Cape Town (42m)</option>
+          <option value="dbn">Durban (8m)</option>
+          <option value="blm">Bloemfontein (1395m)</option>
+          <option value="gqe">Gqeberha / Port Elizabeth (60m)</option>
+          <option value="kim">Kimberley (1197m)</option>
+          <option value="eln">East London (130m)</option>
+          <option value="ptb">Polokwane (1230m)</option>
+        </select>
+      </div>
+      <div class="r2">
+        <div class="fg"><label class="fl">Elevation (m)</label><input type="number" id="wz-elev" value="${document.getElementById('elevation').value||0}" step="10"></div>
+        <div class="fg"><label class="fl">Pressure (kPa)</label><div class="iu"><input type="number" id="wz-p" value="${document.getElementById('atmP').value||101.3}" step="0.1"><span class="utag">kPa</span></div></div>
+      </div>
+      <div class="al al-i" style="font-size:10px;padding:6px 9px;margin-top:4px"><span>ℹ</span><span>Site elevation affects all psychrometric calculations. Johannesburg at 1753m has 18% lower atmospheric pressure than sea level.</span></div>`;
+    nav.innerHTML=`<button class="q-btn q-btn-o" onclick="closeWiz()">Skip</button><button class="q-btn q-btn-p" onclick="wzNext()">Next &#8594;</button>`;
+  }else if(wizStep===1){
+    content.innerHTML=`
+      <div class="q-step-lbl">What are your starting air conditions? (e.g. outdoor air or return air)</div>
+      <div class="r2">
+        <div class="fg"><label class="fl">Dry Bulb Temp (&#176;C)</label><input type="number" id="wz-db" value="30" step="0.5"></div>
+        <div class="fg">
+          <label class="fl">
+            <select id="wz-p2t" onchange="wzUpUnit()" style="border:none;background:transparent;padding:0;height:auto;font-size:10px;font-weight:600;color:var(--ink2);width:auto;cursor:pointer;display:inline">
+              <option value="rh">Rel. Humidity (%)</option>
+              <option value="wb">Wet Bulb (&#176;C)</option>
+              <option value="hr">Hum. Ratio (g/kg)</option>
+              <option value="dp">Dew Point (&#176;C)</option>
+            </select>
+          </label>
+          <div class="iu"><input type="number" id="wz-p2v" value="50" step="0.5"><span class="utag" id="wz-p2u">%</span></div>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Airflow</label><div class="iu"><input type="number" id="wz-flow" value="1.0" step="0.1"><span class="utag">${{m3s:'m³/s',m3hr:'m³/hr',cfm:'CFM'}[flowUnit]}</span></div></div>`;
+    nav.innerHTML=`<button class="q-btn q-btn-o" onclick="wizStep=0;renderWiz()">← Back</button><button class="q-btn q-btn-p" onclick="wzNext()">Next →</button>`;
+  }else if(wizStep===2){
+    content.innerHTML=`
+      <div class="q-step-lbl">What HVAC process are you analysing?</div>
+      <div class="pt-grid" id="wz-ptg">
+        ${Object.keys(PCOLS).map(t=>`
+          <button class="pt-btn" id="wz-t-${t}" style="--pc:${PCOLS[t]};--prgb:${hexRGB(PCOLS[t])}" onclick="wzSelType('${t}')">
+            <div class="pt-ic">${PICS[t]}</div>
+            <div class="pt-lb">${shortName(t)}</div>
+          </button>`).join('')}
+      </div>
+      <div id="wz-type-hint" style="margin-top:8px;font-size:10px;color:var(--mu);min-height:32px"></div>`;
+    nav.innerHTML=`<button class="q-btn q-btn-o" onclick="wizStep=1;renderWiz()">← Back</button><button class="q-btn q-btn-p" id="wz-next3" onclick="wzNext()" disabled style="opacity:0.5">Next →</button>`;
+  }else if(wizStep===3){
+    const type=window._wzType||'cool';
+    content.innerHTML=`
+      <div class="q-step-lbl">${PICS[type]} ${PNAMES[type]} — Enter target conditions</div>
+      <div id="wz-params">${buildWzParams(type)}</div>`;
+    nav.innerHTML=`<button class="q-btn q-btn-o" onclick="wizStep=2;renderWiz()">← Back</button><button class="q-btn q-btn-p" onclick="wzApply()" style="background:${PCOLS[type]}">Apply to Chart</button>`;
+  }
+}
+
+function wzLoadCity(k){
+  const c=CITIES[k];if(!c)return;
+  document.getElementById('wz-elev').value=c.e;
+  document.getElementById('wz-p').value=(101.325*Math.pow(1-2.26e-5*c.e,5.256)).toFixed(2);
+}
+function wzUpUnit(){
+  const u={rh:'%',wb:'°C',hr:'g/kg',dp:'°C'};
+  document.getElementById('wz-p2u').textContent=u[document.getElementById('wz-p2t').value]||'%';
+}
+
+let _wzType=null;
+function wzSelType(t){
+  window._wzType=t;
+  document.querySelectorAll('#wz-ptg .pt-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById(`wz-t-${t}`)?.classList.add('on');
+  const hints={
+    cool:'Air passes over a cooling coil below its dew point. Temperature and humidity both decrease.',
+    heat:'Air temperature rises at constant humidity ratio. Used for reheating supply air.',
+    humid:'Water vapour is added to the air. Steam humidifiers operate at constant temperature.',
+    evap:'Water evaporates into the air at constant wet bulb temperature. Best in dry climates.',
+    hrv:'A heat exchanger transfers energy between exhaust and supply air to reduce conditioning loads.',
+    mix:'Outside air and return air are mixed before conditioning. Reduces cooling load but affects IAQ.',
+    custom:'Enter any start and end conditions to calculate the process between them.'
+  };
+  document.getElementById('wz-type-hint').innerHTML=`<div class="al al-i" style="font-size:10px;padding:5px 9px"><span>${PICS[t]}</span><span>${hints[t]}</span></div>`;
+  const nb=document.getElementById('wz-next3');if(nb){nb.disabled=false;nb.style.opacity='1';}
+}
+
+function buildWzParams(type){
+  if(type==='cool')return`<div class="r2"><div class="fg"><label class="fl">Leaving DB (°C)</label><input type="number" id="wz-edb" value="13" step="0.5"></div><div class="fg"><label class="fl">Leaving RH (%)</label><input type="number" id="wz-erh" value="95" step="1"></div></div>`;
+  if(type==='heat')return`<div class="fg"><label class="fl">Leaving DB (°C)</label><input type="number" id="wz-edb" value="22" step="0.5"></div>`;
+  if(type==='humid')return`<div class="r2"><div class="fg"><label class="fl">Target RH (%)</label><input type="number" id="wz-trh" value="60" step="1"></div><div class="fg"><label class="fl">Type</label><select id="wz-ht"><option value="steam">Steam</option><option value="adiabatic">Adiabatic</option></select></div></div>`;
+  if(type==='evap')return`<div class="fg"><label class="fl">Saturation Efficiency (%)</label><input type="number" id="wz-eff" value="85" step="1"></div>`;
+  if(type==='hrv')return`<div class="r2"><div class="fg"><label class="fl">Exhaust DB (°C)</label><input type="number" id="wz-exdb" value="22" step="0.5"></div><div class="fg"><label class="fl">Exhaust RH (%)</label><input type="number" id="wz-exrh" value="50" step="1"></div></div><div class="fg"><label class="fl">Efficiency (%)</label><input type="number" id="wz-eff" value="70" step="1"></div>`;
+  if(type==='mix')return`<div class="r2"><div class="fg"><label class="fl">Return Air DB (°C)</label><input type="number" id="wz-radb" value="22" step="0.5"></div><div class="fg"><label class="fl">Return Air RH (%)</label><input type="number" id="wz-rarh" value="50" step="1"></div></div><div class="fg"><label class="fl">Outside Air Fraction (%)</label><input type="number" id="wz-oaf" value="20" step="5"></div>`;
+  return`<div class="r2"><div class="fg"><label class="fl">Leaving DB (°C)</label><input type="number" id="wz-edb" value="18" step="0.5"></div><div class="fg"><label class="fl">Leaving RH (%)</label><input type="number" id="wz-erh" value="60" step="1"></div></div>`;
+}
+
+function wzNext(){
+  if(wizStep===0){
+    const elev=document.getElementById('wz-elev')?.value||0;
+    const P=document.getElementById('wz-p')?.value||101.3;
+    document.getElementById('elevation').value=elev;
+    document.getElementById('atmP').value=P;
+    updateAtmP();
+  }else if(wizStep===1){
+    const db=document.getElementById('wz-db')?.value;
+    const p2t=document.getElementById('wz-p2t')?.value;
+    const p2v=document.getElementById('wz-p2v')?.value;
+    const flow=document.getElementById('wz-flow')?.value;
+    if(db)document.getElementById('p0db').value=db;
+    if(p2t){document.getElementById('p0type').value=p2t;updateP0Unit();}
+    if(p2v)document.getElementById('p0val').value=p2v;
+    if(flow)document.getElementById('sysFlow').value=flow;
+    setP0();
+  }else if(wizStep===2){
+    if(!window._wzType){showToast('Select a process type');return;}
+  }
+  wizStep++;
+  if(wizStep>=WIZ_STEPS){wzApply();return;}
+  renderWiz();
+}
+
+function wzApply(){
+  const type=window._wzType||'cool';
+  closeWiz();
+  // Populate the sidebar with a new process block using wizard values
+  addProcBlock();
+  const blocks=document.querySelectorAll('.proc-block');
+  const lastBlock=blocks[blocks.length-1];
+  if(!lastBlock)return;
+  const id=lastBlock.id;
+  // Select the process type
+  selPType(id,type);
+  // Fill in wizard params
+  setTimeout(()=>{
+    if(type==='cool'||type==='custom'||type==='heat'){
+      const edb=document.getElementById('wz-edb');
+      if(edb&&document.getElementById(`${id}-edb`))document.getElementById(`${id}-edb`).value=edb.value;
+      const erh=document.getElementById('wz-erh');
+      if(erh&&document.getElementById(`${id}-erh`))document.getElementById(`${id}-erh`).value=erh.value;
+    }
+    showToast('Wizard applied — click Calculate to see results');
+    lastBlock.scrollIntoView({behavior:'smooth',block:'center'});
+  },200);
+}
+
+// ════════════════════════════════════════════════════════════
+// PDF EXPORT — Modern professional format
+// ════════════════════════════════════════════════════════════
+function exportPDF(){
+  const calcP=procs.filter(p=>p.endState);
+  if(!p0&&calcP.length===0){showToast('Calculate at least one process first');return;}
+  // Render chart at 3× resolution for crisp PDF export
+  const chartImg=(()=>{
+    const canvas=document.getElementById('psychroCanvas');
+    const frame=document.getElementById('chartFrame');
+    const fw=frame.clientWidth, fh=frame.clientHeight;
+    const exportDpr=3;
+    const screenDpr=window.devicePixelRatio||1;
+    // Save current canvas dimensions
+    const origW=canvas.width, origH=canvas.height;
+    const origStyleW=canvas.style.width, origStyleH=canvas.style.height;
+    // Resize to 3× — also tell cW()/cH() to divide by exportDpr not screen DPR
+    canvas.width=fw*exportDpr;
+    canvas.height=fh*exportDpr;
+    canvas.style.width=fw+'px';
+    canvas.style.height=fh+'px';
+    _canvasDpr=exportDpr;
+    const ctx=canvas.getContext('2d');
+    ctx.scale(exportDpr,exportDpr);
+    redraw();
+    const dataUrl=canvas.toDataURL('image/png',1.0);
+    // Restore original canvas and redraw at screen resolution
+    _canvasDpr=null;
+    canvas.width=origW;
+    canvas.height=origH;
+    canvas.style.width=origStyleW;
+    canvas.style.height=origStyleH;
+    ctx.scale(screenDpr,screenDpr);
+    redraw();
+    return dataUrl;
+  })();
+  const P=getP(),elev=document.getElementById('elevation').value||0;
+  const date=new Date().toLocaleDateString('en-ZA',{day:'2-digit',month:'long',year:'numeric'});
+  const proj=document.getElementById('rp-proj')?.value||'Psychrometric Analysis';
+  const ref=document.getElementById('rp-ref')?.value||'—';
+  const client=document.getElementById('rp-client')?.value||'—';
+  const site=document.getElementById('rp-site')?.value||'—';
+  const eng=document.getElementById('rp-eng')?.value||'—';
+  const reg=document.getElementById('rp-reg')?.value||'—';
+  const disc=document.getElementById('rp-disc')?.value||'Mechanical Engineering';
+  const notes=document.getElementById('rp-notes')?.value||'';
+
+  const pts=[];
+  if(p0)pts.push({label:'P0',state:p0,color:'#0A8C7E'});
+  calcP.forEach((p,i)=>pts.push({label:`P${i+1}`,state:p.endState,color:p.color}));
+
+  const ptRows=pts.map(pt=>`<tr>
+    <td style="white-space:nowrap"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${pt.color};margin-right:6px;vertical-align:middle"></span>${pt.label}</td>
+    <td>${pt.state.T.toFixed(1)}</td><td>${pt.state.wb.toFixed(1)}</td><td>${pt.state.dp.toFixed(1)}</td>
+    <td>${pt.state.RH.toFixed(1)}</td><td>${(pt.state.W*1000).toFixed(3)}</td>
+    <td>${pt.state.h.toFixed(2)}</td><td>${pt.state.v.toFixed(4)}</td></tr>`).join('');
+
+  const procRows=calcP.map((p,i)=>{
+    let extra='';
+    if(p.type==='cool'&&p.pd.adpT!==undefined)
+      extra=`<tr style="background:#F0F8FF"><td colspan="9" style="font-size:9px;color:#0A8C7E;padding:3px 10px">→ ADP: ${p.pd.adpT.toFixed(2)}°C &nbsp;&bull;&nbsp; Bypass Factor: ${(p.pd.BF*100).toFixed(1)}% &nbsp;&bull;&nbsp; Contact Factor: ${(p.pd.CF*100).toFixed(1)}%</td></tr>`;
+    return`<tr>
+      <td style="white-space:nowrap"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${p.color};margin-right:6px;vertical-align:middle"></span>${i+1}. ${p.name}</td>
+      <td>${p.startState.T.toFixed(1)}</td><td>${p.endState.T.toFixed(1)}</td>
+      <td style="font-weight:600">${p.dT>0?'+':''}${p.dT.toFixed(1)}</td>
+      <td>${(p.startState.W*1000).toFixed(3)}</td><td>${(p.endState.W*1000).toFixed(3)}</td>
+      <td style="font-weight:600">${p.dW>0?'+':''}${p.dW.toFixed(3)}</td>
+      <td>${p.startState.h.toFixed(2)}</td><td style="font-weight:700;color:#0A8C7E">${p.qTotal.toFixed(1)}</td></tr>${extra}`;
+  }).join('');
+
+  const html=`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>PsychroFlow — Psychrometric Analysis Report</title>
+<style>
+@page{size:A4;margin:0;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:9pt;color:#1A2B3C;background:#fff;}
+
+/* ── HEADER BAND ─────────────────────────────────────────────── */
+.hdr-band{
+  background:linear-gradient(100deg,#0D1414 0%,#1A3232 60%,#0A8C7E 100%);
+  height:18mm;width:100%;
+  display:flex;align-items:center;
+  padding:0 16mm;
+  box-shadow:0 2px 6px rgba(0,0,0,0.28);
+}
+.hdr-logo{display:flex;align-items:center;gap:10px;}
+.hdr-mark{
+  width:34px;height:34px;
+  background:rgba(255,255,255,0.14);
+  border:1.5px solid rgba(255,255,255,0.32);
+  border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;color:white;
+}
+.hdr-brand{font-size:21px;font-weight:700;color:white;letter-spacing:-0.3px;}
+.hdr-brand em{color:#7EC8F0;font-style:normal;}
+.hdr-divider{width:1px;height:28px;background:rgba(255,255,255,0.22);margin:0 14px;}
+.hdr-doctype{font-size:9pt;font-weight:600;color:rgba(255,255,255,0.78);letter-spacing:0.05em;text-transform:uppercase;}
+.hdr-right{margin-left:auto;text-align:right;}
+.hdr-docno{font-size:10pt;font-weight:700;color:white;}
+.hdr-date{font-size:7pt;color:rgba(255,255,255,0.60);margin-top:2px;}
+
+/* ── TITLE BLOCK — ISO drawing style ────────────────────────── */
+.title-block{
+  margin:0 16mm;
+  border:2px solid #1A3232;
+  border-top:none;
+  display:grid;
+  grid-template-columns:1fr 1fr 180px;
+  grid-template-rows:auto auto;
+}
+/* Row 1: Project name spans full width */
+.tb-proj-row{
+  grid-column:1/-1;
+  background:#1A3232;
+  padding:4mm 6mm 3.5mm;
+  border-bottom:2px solid #1A3232;
+  display:flex;align-items:baseline;gap:12mm;
+}
+.tb-proj-name{font-size:17pt;font-weight:800;color:white;letter-spacing:-0.3px;flex:1;}
+.tb-doc-ref{white-space:nowrap;text-align:right;}
+.tb-logo-inline{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.tb-logo-mark{width:30px;height:30px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.30);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:white;}
+.tb-logo-name{font-size:18px;font-weight:700;color:white;letter-spacing:-0.2px;}
+
+/* Row 2, Cell 1: Client + Site */
+.tb-cell{padding:3.5mm 5mm;border-right:1.5px solid #1A3232;}
+.tb-cell:last-child{border-right:none;}
+.tb-cell-label{font-size:6pt;font-weight:800;color:#5A7090;text-transform:uppercase;
+               letter-spacing:0.12em;margin-bottom:1.5mm;}
+.tb-cell-value{font-size:9.5pt;font-weight:700;color:#0D1414;line-height:1.3;}
+.tb-cell-sub{font-size:8pt;color:#5A7090;margin-top:1mm;}
+
+/* Row 2, Cell 3: Site conditions (compact grid) */
+.tb-conditions{padding:2mm 0;display:grid;grid-template-columns:1fr 1fr;border-right:none;}
+.tb-cond{padding:1.5mm 4mm;border-right:1px solid #C8D8E0;border-bottom:1px solid #C8D8E0;}
+.tb-cond:nth-child(2n){border-right:none;}
+.tb-cond:nth-last-child(-n+2){border-bottom:none;}
+.tb-cl{font-size:5.5pt;font-weight:800;color:#7090A8;text-transform:uppercase;letter-spacing:0.09em;}
+.tb-cv{font-size:8pt;font-weight:700;color:#0D1414;}
+
+/* Accent bar */
+.accent-bar{
+  height:4px;
+  background:linear-gradient(90deg,#0A8C7E 0%,#1ABCAA 60%,#7EC8F0 100%);
+  margin:0 16mm 5mm;
+}
+
+/* ── BODY ─────────────────────────────────────────────────────── */
+.body{padding:0 16mm;}
+
+.notes-box{background:#EEF5F3;border-left:3px solid #0A8C7E;padding:3mm 5mm;font-size:8pt;color:#1A3050;margin-bottom:5mm;border-radius:0 4px 4px 0;}
+.notes-box b{color:#1A3232;}
+
+/* Section heading */
+.sh{display:flex;align-items:center;gap:8px;margin:5mm 0 3mm;}
+.sh-bar{width:4px;height:15pt;background:#0A8C7E;border-radius:1.5px;flex-shrink:0;}
+.sh-text{font-size:11pt;font-weight:800;color:#0D1414;letter-spacing:0.02em;text-transform:uppercase;}
+.sh-rule{flex:1;height:1.5px;background:linear-gradient(90deg,#B0C4D8,transparent);}
+
+/* Chart */
+.chart-wrap{border:1.5px solid #B0C4D8;border-radius:5px;overflow:hidden;margin-bottom:5mm;box-shadow:0 1px 5px rgba(18,48,78,0.10);}
+img.chart{width:100%;display:block;}
+
+/* ── TABLES ───────────────────────────────────────────────────── */
+.tbl-wrap{margin-bottom:5mm;border:1.5px solid #A8BCD0;border-radius:5px;overflow:hidden;box-shadow:0 1px 4px rgba(18,48,78,0.07);}
+table{width:100%;border-collapse:collapse;}
+
+thead tr.col-hdr{background:#1A3232;}
+thead tr.col-hdr th{
+  color:white;padding:5pt 8pt;
+  font-size:7.5pt;font-weight:700;
+  letter-spacing:0.05em;text-transform:uppercase;
+  border-right:1px solid rgba(255,255,255,0.12);
+  text-align:right;
+}
+thead tr.col-hdr th:first-child{text-align:left;border-left:none;}
+thead tr.col-hdr th:last-child{border-right:none;}
+
+thead tr.unit-hdr{background:#E8F0F8;}
+thead tr.unit-hdr td{
+  font-size:7pt;color:#5A7090;font-weight:600;
+  padding:2.5pt 8pt;text-align:right;
+  border-right:1px solid #C8D8E8;
+  border-bottom:2px solid #A8BCD0;
+  font-style:italic;
+}
+thead tr.unit-hdr td:first-child{text-align:left;}
+thead tr.unit-hdr td:last-child{border-right:none;}
+
+tbody tr{border-bottom:1px solid #D8E4EE;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:nth-child(even){background:#F5F8FC;}
+tbody td{
+  padding:5pt 8pt;font-size:8.5pt;color:#1A2B3C;
+  border-right:1px solid #E0ECF4;
+  text-align:right;vertical-align:middle;
+}
+tbody td:first-child{
+  text-align:left;font-weight:700;color:#0D1414;
+  border-left:3px solid #0A8C7E;
+  background:rgba(10,140,126,0.05);
+  padding-left:7pt;
+}
+tbody td:last-child{border-right:none;}
+
+.duty{font-weight:800;color:#1A3232;}
+.val-heat{color:#B83800;font-weight:700;}
+.val-cool{color:#0F6EA0;font-weight:700;}
+
+/* ── FOOTER ───────────────────────────────────────────────────── */
+.footer{
+  margin:5mm 16mm 0;
+  padding:3mm 0 5mm;
+  border-top:1.5px solid #B0C4D8;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;gap:8px;
+}
+.footer-left{font-size:7pt;color:#5A7090;}
+.footer-left strong{color:#1A3232;}
+.footer-center{font-size:6.5pt;color:#8AAAC0;text-align:center;}
+.footer-right{font-size:7pt;color:#5A7090;text-align:right;}
+
+/* ── THEORY PAGE ────────────────────────────────────────────────────────── */
+.theory-page{max-width:1100px;margin:0 auto;padding:40px 24px 60px;}
+.theory-hero{margin-bottom:48px;padding-bottom:32px;border-bottom:2px solid var(--brd);}
+.th-badge{display:inline-block;font-size:10px;font-weight:700;color:var(--pr);
+          text-transform:uppercase;letter-spacing:0.14em;
+          background:var(--pp2);padding:4px 12px;border-radius:20px;margin-bottom:16px;}
+.th-h1{font-family:var(--serif);font-size:36px;font-weight:700;color:var(--ink);
+       line-height:1.15;letter-spacing:-0.5px;margin-bottom:16px;}
+.th-lead{font-size:17px;color:var(--mu);line-height:1.80;max-width:760px;}
+.th-h2{font-size:17px;font-weight:700;color:var(--ink);margin-bottom:14px;
+       display:flex;align-items:center;gap:10px;}
+.th-h2-num{display:inline-flex;align-items:center;justify-content:center;
+           width:26px;height:26px;background:var(--pr);color:white;
+           border-radius:50%;font-size:11px;font-weight:700;flex-shrink:0;}
+.th-p{font-size:14.5px;color:var(--mu);line-height:1.80;margin-bottom:14px;}
+.th-p-sm{font-size:13px;}
+.th-formula{
+  background:var(--s2);border-left:3px solid var(--pr);
+  padding:10px 16px;margin:12px 0;border-radius:0 6px 6px 0;
+  font-family:"Courier New",monospace;font-size:13px;color:var(--ink2);
+  letter-spacing:0.02em;
+}
+.th-list{list-style:none;padding:0;margin:0;}
+.th-list li{font-size:14px;color:var(--mu);line-height:1.7;padding:5px 0 5px 22px;
+            position:relative;border-bottom:1px solid var(--brd);}
+.th-list li:last-child{border-bottom:none;}
+.th-list li::before{content:"→";position:absolute;left:0;color:var(--pr);font-weight:700;}
+.th-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:40px;}
+.th-section{margin-bottom:40px;}
+.th-full{grid-column:1/-1;}
+.th-callout{background:var(--s2);border-radius:var(--rl);padding:28px 28px 20px;
+            border:1px solid var(--brd);}
+
+/* Property cards */
+.th-prop-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px;}
+.th-prop-card{background:var(--white);border:1px solid var(--brd);border-radius:var(--rl);
+              padding:16px;border-top:3px solid var(--pr);
+              box-shadow:var(--sh-sm);transition:box-shadow 0.15s;}
+.th-prop-card:hover{box-shadow:var(--sh);}
+.th-prop-sym{font-family:var(--serif);font-size:22px;font-weight:700;color:var(--pr);
+             margin-bottom:4px;}
+.th-prop-name{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+.th-prop-unit{font-size:10px;font-weight:600;color:var(--mu);margin-bottom:8px;
+              text-transform:uppercase;letter-spacing:0.07em;}
+.th-prop-desc{font-size:12px;color:var(--mu);line-height:1.65;margin:0;}
+
+/* Process cards */
+.th-proc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:20px;}
+.th-proc-card{background:var(--white);border:1px solid var(--brd);border-radius:var(--rl);
+              padding:18px;box-shadow:var(--sh-sm);transition:box-shadow 0.15s;}
+.th-proc-card:hover{box-shadow:var(--sh);}
+.th-proc-ic{font-size:24px;margin-bottom:8px;}
+.th-proc-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:8px;}
+.th-proc-desc{font-size:12.5px;color:var(--mu);line-height:1.70;margin:0;}
+
+/* Standard cards */
+.th-std-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:20px;}
+.th-std-card{background:var(--white);border:1px solid var(--brd);border-radius:var(--rl);
+             padding:16px;box-shadow:var(--sh-sm);}
+.th-std-name{font-size:16px;font-weight:800;color:var(--pr);margin-bottom:4px;font-family:var(--serif);}
+.th-std-title{font-size:11px;font-weight:700;color:var(--ink);margin-bottom:8px;line-height:1.4;}
+.th-std-desc{font-size:12px;color:var(--mu);line-height:1.65;margin:0;}
+
+@media(max-width:900px){
+  .th-grid-2{grid-template-columns:1fr;}
+  .th-prop-grid{grid-template-columns:repeat(2,1fr);}
+  .th-proc-grid{grid-template-columns:repeat(2,1fr);}
+  .th-std-grid{grid-template-columns:repeat(2,1fr);}
+  .th-h1{font-size:26px;}
+}
+</style>
+</head>
+<body>
+
+<div class="title-block">
+  <!-- Row 1: Branding left, project name + reference right -->
+  <div class="tb-proj-row">
+    <div class="tb-logo-inline">
+      <div class="tb-logo-mark">PF</div>
+      <div class="tb-logo-name">Psychro<span style="opacity:0.65">Flow</span></div>
+    </div>
+    <div style="width:1px;background:rgba(255,255,255,0.18);align-self:stretch;margin:0 8mm;flex-shrink:0;"></div>
+    <div style="flex:1">
+      <div style="font-size:7pt;font-weight:700;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:0.12em;margin-bottom:2mm;">Project</div>
+      <div class="tb-proj-name">${proj}</div>
+    </div>
+    <div class="tb-doc-ref">
+      <div style="font-size:7pt;color:rgba(255,255,255,0.55);margin-bottom:1mm;">Ref / Doc No.</div>
+      <div style="font-size:11pt;font-weight:700;color:white;">${ref||'—'}</div>
+      <div style="font-size:7pt;color:rgba(255,255,255,0.50);margin-top:1mm;">${date}</div>
+    </div>
+  </div>
+  <!-- Row 2, Cell 1: Client -->
+  <div class="tb-cell">
+    <div class="tb-cell-label">Client</div>
+    <div class="tb-cell-value">${client}</div>
+    <div class="tb-cell-sub">${site}</div>
+  </div>
+  <!-- Row 2, Cell 2: Engineer + Date -->
+  <div class="tb-cell">
+    <div class="tb-cell-label">Prepared by</div>
+    <div class="tb-cell-value">${eng}</div>
+    <div class="tb-cell-sub">${date} &nbsp;·&nbsp; ASHRAE Fundamentals</div>
+  </div>
+  <!-- Row 2, Cell 3: Site Conditions -->
+  <div class="tb-cell" style="padding:0">
+    <div style="padding:2mm 4mm 1.5mm;border-bottom:1px solid #C8D8E0;font-size:6pt;font-weight:800;color:#5A7090;text-transform:uppercase;letter-spacing:0.12em">Site Conditions</div>
+    <div class="tb-conditions">
+      <div class="tb-cond"><div class="tb-cl">Elevation</div><div class="tb-cv">${elev} m ASL</div></div>
+      <div class="tb-cond"><div class="tb-cl">Pressure</div><div class="tb-cv">${P.toFixed(2)} kPa</div></div>
+      <div class="tb-cond"><div class="tb-cl">Points</div><div class="tb-cv">${pts.length}</div></div>
+      <div class="tb-cond"><div class="tb-cl">Processes</div><div class="tb-cv">${calcP.length}</div></div>
+      <div class="tb-cond"><div class="tb-cl">Units</div><div class="tb-cv">${unitSys==='metric'?'SI':'I-P'}</div></div>
+      <div class="tb-cond"><div class="tb-cl">Rev.</div><div class="tb-cv">P1</div></div>
+    </div>
+  </div>
+</div>
+<div class="accent-bar"></div>
+
+<div class="body">
+
+${notes?`<div class="notes-box"><b>&#9998; Notes:</b> ${notes}</div>`:''}
+
+<div class="sh"><div class="sh-bar"></div><div class="sh-text">Psychrometric Chart</div><div class="sh-rule"></div></div>
+<div class="chart-wrap"><img class="chart" src="${chartImg}"></div>
+
+<div class="sh"><div class="sh-bar"></div><div class="sh-text">State Point Properties</div><div class="sh-rule"></div></div>
+<div class="tbl-wrap">
+  <table>
+    <thead>
+      <tr class="col-hdr">
+        <th>Point</th><th>Dry Bulb</th><th>Wet Bulb</th><th>Dew Point</th>
+        <th>Rel. Humidity</th><th>Humidity Ratio</th><th>Enthalpy</th><th>Spec. Volume</th>
+      </tr>
+      <tr class="unit-hdr">
+        <td></td><td>°C</td><td>°C</td><td>°C</td><td>%</td><td>g/kg da</td><td>kJ/kg da</td><td>m³/kg da</td>
+      </tr>
+    </thead>
+    <tbody>${ptRows}</tbody>
+  </table>
+</div>
+
+<div class="sh"><div class="sh-bar"></div><div class="sh-text">Process Results Summary</div><div class="sh-rule"></div></div>
+<div class="tbl-wrap">
+  <table>
+    <thead>
+      <tr class="col-hdr">
+        <th>Process</th><th>T&#x2081;</th><th>T&#x2082;</th><th>&Delta;T</th>
+        <th>W&#x2081;</th><th>W&#x2082;</th><th>&Delta;W</th><th>h&#x2081;</th><th>Total Duty</th>
+      </tr>
+      <tr class="unit-hdr">
+        <td></td><td>°C</td><td>°C</td><td>K</td>
+        <td>g/kg</td><td>g/kg</td><td>g/kg</td><td>kJ/kg</td><td>kW</td>
+      </tr>
+    </thead>
+    <tbody>${procRows||'<tr><td colspan="9" style="text-align:center;color:#7090A8;padding:10pt;font-style:italic">No processes calculated</td></tr>'}</tbody>
+  </table>
+</div>
+
+</div>
+
+<div class="footer">
+  <div class="footer-left"><strong>PsychroFlow</strong> &nbsp;&middot;&nbsp; psychrosuite.com</div>
+  <div class="footer-center">Calculations per ASHRAE Handbook of Fundamentals &nbsp;&middot;&nbsp; Altitude-corrected per ICAO standard atmosphere</div>
+  <div class="footer-right">${date} &nbsp;&middot;&nbsp; Page 1</div>
+</div>
+
+</body>
+</html>`;
+
+  const win=window.open('','_blank','width=920,height=720');
+  win.document.write(html);win.document.close();
+  win.onload=()=>setTimeout(()=>win.print(),400);
+  showToast('Report ready — Print → Save as PDF');
+}
+
+// ════════════════════════════════════════════════════════════
+// SESSION PERSISTENCE
+// ════════════════════════════════════════════════════════════
+const SK='pf_v1';let saveTimer=null;
+
+function saveSession(){
+  const dot=document.getElementById('sDot'),txt=document.getElementById('sTxt');
+  if(dot)dot.classList.add('sv');if(txt)txt.textContent='Saving...';
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    try{
+      localStorage.setItem(SK,JSON.stringify({
+        unitSys,flowUnit,CR,LY,
+        elevation:document.getElementById('elevation')?.value,
+        atmP:document.getElementById('atmP')?.value,
+        sysFlow:document.getElementById('sysFlow')?.value,
+        savedAt:new Date().toISOString()
+      }));
+      if(dot)dot.classList.remove('sv');if(txt)txt.textContent='Saved';
+    }catch(e){if(txt)txt.textContent='Save failed';}
+  },800);
+}
+
+function restoreSession(){
+  try{
+    const raw=localStorage.getItem(SK);if(!raw)return false;
+    const s=JSON.parse(raw);if(!s)return false;
+    if(s.unitSys)unitSys=s.unitSys;
+    if(s.flowUnit)flowUnit=s.flowUnit;
+    if(s.CR)CR={...CR,...s.CR};
+    if(s.LY)LY={...LY,...s.LY};
+    if(s.elevation)document.getElementById('elevation').value=s.elevation;
+    if(s.atmP)document.getElementById('atmP').value=s.atmP;
+    if(s.sysFlow)document.getElementById('sysFlow').value=s.sysFlow;
+    document.getElementById('upill').textContent=unitSys==='metric'?'SI':'I-P';
+    ['wm-met','wm-imp'].forEach(id=>document.getElementById(id)?.classList.remove('on'));
+    document.getElementById(unitSys==='metric'?'wm-met':'wm-imp')?.classList.add('on');
+    const L={m3s:'m³/s',m3hr:'m³/hr',cfm:'CFM'};
+    document.getElementById('flowUnitBtn').textContent=L[flowUnit]||'m³/s';
+    const elv=document.getElementById('elevation').value;
+    const _mel2=document.getElementById('metaElev');if(_mel2)_mel2.textContent=elv>0?`${elv}m ASL`:'Sea level';
+    const _mp2=document.getElementById('metaP');if(_mp2)_mp2.textContent=`P = ${getP().toFixed(1)} kPa`;
+    const d=new Date(s.savedAt);
+    document.getElementById('sTxt').textContent=`Restored ${d.toLocaleTimeString('en-ZA',{hour:'2-digit',minute:'2-digit'})}`;
+    setTimeout(()=>applyLang(),50);
+    return true;
+  }catch(e){return false;}
+}
+
+function clearSession(){localStorage.removeItem(SK);localStorage.removeItem('pf_v1_visited');showToast('Session cleared');}
+
+// ════════════════════════════════════════════════════════════
+// UNDO
+// ════════════════════════════════════════════════════════════
+function pushUndo(){undo=[JSON.stringify({procs,p0,html:document.getElementById('procBlocks').innerHTML,bc:blockCount})];}
+
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==='z'){
+    e.preventDefault();
+    if(undo.length>0){
+      const prev=JSON.parse(undo.pop());
+      procs=prev.procs;p0=prev.p0;blockCount=prev.bc||blockCount;
+      document.getElementById('procBlocks').innerHTML=prev.html;
+      if(p0){document.getElementById('chartEmpty').style.display='none';}
+      document.getElementById('addProcBtn').style.display='flex';
+      updateResults();updateProcCount();redraw();saveSession();showToast('Undone');
+    }else showToast('Nothing to undo');
+  }
+  if((e.ctrlKey||e.metaKey)&&e.key==='p'){e.preventDefault();showTab('report');}
+});
+
+// ════════════════════════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════════════════════════
+function showToast(msg){
+  document.getElementById('toastMsg').innerHTML=msg;
+  const t=document.getElementById('toast');t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'),3000);
+}
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+window.addEventListener('resize',()=>resizeCanvas());
+
+document.addEventListener('DOMContentLoaded',()=>{
+  resizeCanvas();
+  initChartEvents();
+  const restored=restoreSession();
+  if(restored){document.getElementById('wm').classList.add('off');}
+  // Always ensure first process block exists after load (whether restored or fresh)
+  setTimeout(()=>{
+    const hasBlocks=document.querySelectorAll('.proc-block').length>0;
+    if(!hasBlocks){
+      addProcBlock();
+      const hint=document.querySelector('#procBlocks div[style*="text-align:center"]');
+      if(hint)hint.remove();
+    }
+  },50);
+  document.getElementById('cfb-rh')?.classList.add('on');
+  document.getElementById('cfb-wb')?.classList.add('on');
+});
+
+function collapseBlock(id,startT,endT,color){
+  const block=document.getElementById(id);
+  if(!block)return;
+  const strip=document.getElementById(`${id}-strip`);
+  if(strip)strip.style.background=color;
+  const route=document.getElementById(`${id}-route`);
+  if(route)route.textContent=`${startT.toFixed(1)}° → ${endT.toFixed(1)}°C`;
+  block.classList.add('collapsed');
+}
+
+function collapseAllBlocks(){
+  document.querySelectorAll('.proc-block').forEach(b=>{
+    const id=b.id;
+    const proc=procs.find(p=>p.blockId===id);
+    if(proc&&proc.endState){
+      const route=document.getElementById(`${id}-route`);
+      if(route&&!route.textContent)
+        route.textContent=`${proc.startState.T.toFixed(1)}° → ${proc.endState.T.toFixed(1)}°C`;
+      const strip=document.getElementById(`${id}-strip`);
+      if(strip)strip.style.background=proc.color;
+      b.classList.add('collapsed');
+    }
+  });
+}
+
+function toggleBlock(id){
+  const block=document.getElementById(id);
+  if(!block)return;
+  if(block.classList.contains('collapsed')){
+    // Expand this one
+    block.classList.remove('collapsed');
+    const route=document.getElementById(`${id}-route`);
+    if(route)route.textContent='';
+  }
+  // Only one can be open at a time — collapse all others
+  document.querySelectorAll('.proc-block').forEach(b=>{
+    if(b.id!==id&&!b.classList.contains('collapsed')){
+      const bid=b.id;
+      const proc=procs.find(p=>p.blockId===bid);
+      if(proc&&proc.endState){
+        const route=document.getElementById(`${bid}-route`);
+        if(route)route.textContent=`${proc.startState.T.toFixed(1)}° → ${proc.endState.T.toFixed(1)}°C`;
+        const strip=document.getElementById(`${bid}-strip`);
+        if(strip)strip.style.background=proc.color;
+        b.classList.add('collapsed');
+      }
+      // Don't collapse un-calculated blocks — they haven't been used yet
+    }
+  });
+}
+
+</script>
+</body>
+</html>
