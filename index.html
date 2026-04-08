@@ -656,24 +656,22 @@ footer .footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap
   .chart-status{height:22px;}
   .st-txt{font-size:11px;}
 
-  /* Floating toolbar — centred at bottom, never overlaps Y-axis labels */
+  /* Floating toolbar — move to bottom-left, compact, no overlap */
   .cft{
     position:absolute;
     bottom:6px;
-    left:50%;
-    transform:translateX(-50%);
+    left:6px;
     right:auto;
     top:auto;
-    padding:4px 8px;
-    gap:4px;
-    background:rgba(255,255,255,0.96);
-    border:1px solid var(--brd);
-    border-radius:8px;
-    box-shadow:0 2px 8px rgba(0,0,0,0.12);
+    padding:3px;
+    gap:2px;
+    background:rgba(255,255,255,0.94);
+    border-radius:6px;
+    box-shadow:0 1px 6px rgba(0,0,0,0.15);
     z-index:10;
   }
-  .cft-b{width:34px;height:32px;font-size:12px;font-weight:800;border-radius:5px;}
-  .cft-sep{height:14px;}
+  .cft-b{width:32px;height:32px;font-size:12px;font-weight:800;border-radius:4px;}
+  .cft-sep{height:12px;}
 
   /* ── RESULTS ─────────────────────────────────── */
   .rs-title{font-size:18px;}
@@ -727,41 +725,6 @@ footer .footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap
   /* Even smaller PAD on tiny screens — give the plot more room */
   .cft-b{width:30px;height:30px;font-size:11px;}
 }
-
-/* ── LEGAL MODALS ─────────────────────────────────────────────── */
-.lbox{background:var(--white);border-radius:var(--rl);box-shadow:var(--sh-lg);
-      width:560px;max-width:calc(100vw - 28px);max-height:82vh;
-      display:flex;flex-direction:column;overflow:hidden;
-      animation:su 0.22s cubic-bezier(0.34,1.4,0.64,1);}
-.lbox-hdr{padding:18px 22px 16px;background:linear-gradient(135deg,#0D1414,#1A3232);
-          display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
-.lbox-title{font-family:var(--serif);font-size:17px;font-weight:700;color:white;}
-.lbox-close{background:none;border:none;color:rgba(255,255,255,0.65);
-            font-size:22px;cursor:pointer;line-height:1;padding:0;}
-.lbox-close:hover{color:white;}
-.lbox-body{padding:22px 24px 26px;overflow-y:auto;font-size:13px;
-           color:var(--ink2);line-height:1.75;}
-.lbox-body h3{font-size:13px;font-weight:700;color:var(--pr);
-              text-transform:uppercase;letter-spacing:0.07em;
-              margin:18px 0 6px;border-bottom:1px solid var(--brd);padding-bottom:4px;}
-.lbox-body h3:first-child{margin-top:0;}
-.lbox-body p{margin-bottom:10px;}
-.lbox-body ul{padding-left:20px;margin-bottom:10px;}
-.lbox-body ul li{margin-bottom:4px;}
-.lbox-body a{color:var(--pr);text-decoration:none;}
-.lbox-body a:hover{text-decoration:underline;}
-.lbox-contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
-.lbox-contact-card{background:var(--s2);border:1px solid var(--brd);border-radius:var(--r);
-                   padding:12px 14px;}
-.lbox-contact-card label{font-size:10px;font-weight:700;color:var(--mu);
-                          text-transform:uppercase;letter-spacing:0.09em;display:block;margin-bottom:4px;}
-.lbox-contact-card span{font-size:13px;font-weight:600;color:var(--ink);}
-.changelog-entry{border-left:3px solid var(--pr);padding:10px 14px;
-                 background:var(--s2);border-radius:0 var(--r) var(--r) 0;margin-bottom:10px;}
-.changelog-version{font-size:12px;font-weight:800;color:var(--pr);}
-.changelog-date{font-size:11px;color:var(--mu);margin-left:8px;}
-.changelog-items{margin-top:6px;padding-left:16px;}
-.changelog-items li{font-size:12px;color:var(--ink2);margin-bottom:3px;}
 </style>
 </head>
 <body>
@@ -868,7 +831,7 @@ footer .footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap
       <button class="nb nb-g" onclick="showTab('howto')">&#128161; How to Use</button>
       <button class="nb nb-g" onclick="showTab('settings')">&#9881; Settings</button>
       <button class="nb nb-g" onclick="clearAll()">Clear All</button>
-      <button class="nb nb-p" onclick="showTab('report')">&#128196; Report</button>
+      <button class="nb nb-p" onclick="exportPDF()">&#8595; PDF Report</button>
     </div>
   </div>
   <div class="tabs">
@@ -1339,11 +1302,11 @@ footer .footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap
     Professional HVAC Psychrometric Analysis Tool
   </div>
   <div class="footer-links">
-    <a href="#" onclick="openLegal('terms');return false;">Terms &amp; Conditions</a>
-    <a href="#" onclick="openLegal('privacy');return false;">Privacy Statement</a>
-    <a href="#" onclick="openLegal('disclaimer');return false;">Disclaimer</a>
-    <a href="#" onclick="openLegal('contact');return false;">Contact</a>
-    <a href="#" onclick="openLegal('changelog');return false;">Changelog</a>
+    <a href="#">Terms &amp; Conditions</a>
+    <a href="#">Privacy Statement</a>
+    <a href="#">Disclaimer</a>
+    <a href="#">Contact</a>
+    <a href="#">Changelog</a>
   </div>
   <div style="margin-top:10px;font-size:10px;color:rgba(255,255,255,0.35)">
     Calculations based on ASHRAE Handbook of Fundamentals &bull; Not professional advice &bull; &copy; 2026 PsychroFlow
@@ -2341,20 +2304,28 @@ function redraw(){
         f?c.moveTo(toX(T),toY(Wv)):c.lineTo(toX(T),toY(Wv));f=false;
       }c.stroke();
       if(LY.labels){
-        // Walk from Tmax backwards — find last point where RH curve is in bounds
-        let lastW=null;
-        for(let t=CR.Tmax;t>=CR.Tmin;t-=0.1){
-          const w=wFromRH(t,rh);
-          if(w>0&&w<=CR.Wmax){lastW=w;break;}
-        }
-        if(lastW!==null){
-          const ly2=toY(lastW);
-          if(ly2>PAD.top+4&&ly2<cH()-PAD.bottom-4){
-            c.fillStyle=`rgba(10,100,90,${mj?0.88:0.58})`;
-            c.font=`${mj?'bold 10px':'9px'} DM Sans,sans-serif`;
-            c.textAlign='left';
-            c.fillText(`${rh}%`,cW()-PAD.right+4,ly2+4);
+        // Find where the RH curve exits the right edge of the plot (at T=Tmax)
+        // If it exits through the top (W=Wmax), walk left to find exit point
+        const rightEdgeW=wFromRH(CR.Tmax,rh);
+        let labelY;
+        if(rightEdgeW>0&&rightEdgeW<=CR.Wmax){
+          // Curve exits through right edge at T=Tmax
+          labelY=toY(rightEdgeW);
+        } else {
+          // Curve exits through top — find T where W = Wmax
+          let exitT=CR.Tmax;
+          for(let t=CR.Tmin;t<=CR.Tmax;t+=0.3){
+            if(wFromRH(t,rh)>=CR.Wmax*0.998){exitT=t;break;}
           }
+          labelY=PAD.top+6;
+        }
+        // Place label just inside the right border of the chart
+        const labelX=cW()-PAD.right-4;
+        if(labelY>PAD.top+4&&labelY<cH()-PAD.bottom-4){
+          c.fillStyle=`rgba(10,100,90,${mj?0.85:0.55})`;
+          c.font=`${mj?'bold 10px':'9px'} DM Sans,sans-serif`;
+          c.textAlign='right';
+          c.fillText(`${rh}%`,labelX,labelY+4);
         }
       }
     });
@@ -2382,31 +2353,26 @@ function redraw(){
   for(let T=CR.Tmin;T<=CR.Tmax;T+=0.2){const Wv=wFromRH(T,100);if(Wv>CR.Wmax)break;f?c.moveTo(toX(T),toY(Wv)):c.lineTo(toX(T),toY(Wv));f=false;}
   c.stroke();c.shadowColor='transparent';c.shadowBlur=0;
   if(LY.labels){c.fillStyle='#1A3232';c.font='bold 10px DM Sans,sans-serif';c.textAlign='left';c.fillText('100% RH',toX(CR.Tmin+3)+5,toY(wFromRH(CR.Tmin+3,100))-5);}
-  // Enthalpy lines + labels — drawn AFTER saturation curve
+  // Enthalpy lines + labels — drawn AFTER saturation fill so labels visible
   if(LY.enth){
     c.setLineDash([4,7]);
     for(let hv=-10;hv<=120;hv+=10){
       c.strokeStyle='rgba(120,80,210,0.40)';c.lineWidth=1.0;
       c.beginPath();let ef=true;
-      // Find rightmost valid T for label placement
-      let enthLabelW=null;
-      for(let t=CR.Tmax;t>=CR.Tmin;t-=0.5){
-        const wv=(hv-1.006*t)/(2501+1.86*t);
-        if(wv>0&&wv<=CR.Wmax&&wv<wFromRH(t,100)){enthLabelW=wv;break;}
-      }
+      let labelX=null,labelY=null;
       for(let T=CR.Tmin;T<=CR.Tmax;T+=0.5){
         const Wv=(hv-1.006*T)/(2501+1.86*T);
-        if(Wv<0||Wv>CR.Wmax||Wv>=wFromRH(T,100)){ef=true;continue;}
-        ef?c.moveTo(toX(T),toY(Wv)):c.lineTo(toX(T),toY(Wv));ef=false;
+        if(Wv<0||Wv>CR.Wmax||Wv>wFromRH(T,100)-0.0001){ef=true;continue;}
+        const px=toX(T),py=toY(Wv);
+        ef?c.moveTo(px,py):c.lineTo(px,py);ef=false;
+        labelX=px;labelY=py; // track last valid point for label
       }
       c.stroke();
-      if(LY.labels&&enthLabelW!==null){
-        const ely=toY(enthLabelW);
-        if(ely>PAD.top+2&&ely<cH()-PAD.bottom-4){
-          c.fillStyle='rgba(90,50,180,0.68)';
-          c.font='italic 9px DM Sans,sans-serif';c.textAlign='left';
-          c.fillText(`${hv}`,cW()-PAD.right+5,ely+3);
-        }
+      // Label in right margin outside chart box
+      if(LY.labels&&labelX!==null&&labelY!==null&&labelY>PAD.top+2&&labelY<cH()-PAD.bottom-4){
+        c.fillStyle='rgba(90,50,180,0.65)';
+        c.font='italic 9px DM Sans,sans-serif';c.textAlign='left';
+        c.fillText(`${hv}`,cW()-PAD.right+5,labelY+3);
       }
     }
     c.setLineDash([]);
@@ -3193,212 +3159,6 @@ ${notes?`<div class="notes-box"><b>&#9998; Notes:</b> ${notes}</div>`:''}
   <div class="footer-right">${date} &nbsp;&middot;&nbsp; Page 1</div>
 </div>
 
-
-<!-- ── LEGAL MODALS ─────────────────────────────────────────────── -->
-<!-- Terms & Conditions -->
-<div class="ov off" id="legal-terms">
-  <div class="lbox">
-    <div class="lbox-hdr">
-      <div class="lbox-title">Terms &amp; Conditions</div>
-      <button class="lbox-close" onclick="closeLegal('terms')">&#215;</button>
-    </div>
-    <div class="lbox-body">
-      <h3>Acceptance of Terms</h3>
-      <p>By accessing and using PsychroFlow at psychrosuite.com, you accept and agree to be bound by these terms. If you do not agree to these terms, please do not use this tool.</p>
-      <h3>Use of the Tool</h3>
-      <p>PsychroFlow is a professional psychrometric calculation tool intended for use by qualified HVAC engineers, mechanical engineers, and other professionals with relevant technical training. The tool is provided free of charge for personal and professional use.</p>
-      <ul>
-        <li>You may use PsychroFlow for commercial and non-commercial engineering calculations.</li>
-        <li>You may not redistribute, resell, or sublicense the tool or its source code.</li>
-        <li>You may not use the tool for any unlawful purpose.</li>
-      </ul>
-      <h3>No Warranty</h3>
-      <p>PsychroFlow is provided "as is" without warranty of any kind, express or implied. We make no representations or warranties regarding the accuracy, completeness, or suitability of the calculations for any specific application. All results must be independently verified by a qualified engineer before use in design submissions, equipment specifications, or any official engineering document.</p>
-      <h3>Limitation of Liability</h3>
-      <p>To the fullest extent permitted by law, psychrosuite.com and its developers shall not be liable for any direct, indirect, incidental, consequential, or special damages arising from the use of or inability to use this tool, even if advised of the possibility of such damages.</p>
-      <h3>Intellectual Property</h3>
-      <p>PsychroFlow, its interface design, and its underlying calculation engine are the intellectual property of psychrosuite.com. The name PsychroFlow and the domain psychrosuite.com are reserved.</p>
-      <h3>Modifications</h3>
-      <p>We reserve the right to modify these terms at any time. Continued use of the tool following any changes constitutes acceptance of the revised terms.</p>
-      <h3>Governing Law</h3>
-      <p>These terms are governed by the laws of the Republic of South Africa.</p>
-    </div>
-  </div>
-</div>
-
-<!-- Privacy Statement -->
-<div class="ov off" id="legal-privacy">
-  <div class="lbox">
-    <div class="lbox-hdr">
-      <div class="lbox-title">Privacy Statement</div>
-      <button class="lbox-close" onclick="closeLegal('privacy')">&#215;</button>
-    </div>
-    <div class="lbox-body">
-      <h3>Our Commitment</h3>
-      <p>PsychroFlow is designed with privacy as a default. We collect the minimum information necessary to operate the tool, and we do not sell or share your data with third parties.</p>
-      <h3>Data We Collect</h3>
-      <p><strong>Session data:</strong> PsychroFlow saves your current calculation session (site conditions, processes, report details) in your browser's localStorage. This data never leaves your device — it is stored locally and is only used to restore your session if you refresh the page.</p>
-      <p><strong>Analytics:</strong> We use Vercel's built-in analytics to collect anonymised, aggregate data such as page view counts and geographic regions. No personally identifiable information is collected through analytics.</p>
-      <p><strong>No accounts:</strong> PsychroFlow does not require registration. We do not collect your name, email address, or any personal information unless you voluntarily contact us.</p>
-      <h3>Cookies</h3>
-      <p>PsychroFlow does not use tracking cookies. The only browser storage used is localStorage for session persistence, which you can clear at any time using the Settings page within the tool.</p>
-      <h3>Third-Party Services</h3>
-      <p>The tool is hosted on Vercel. Vercel's privacy policy applies to hosting and infrastructure. We do not use advertising platforms, social media tracking pixels, or analytics services beyond the basic Vercel analytics described above.</p>
-      <h3>Your Rights</h3>
-      <p>Because we do not collect personal data, there is no profile to delete or correct. You can clear all locally stored session data at any time via Settings → Clear saved session data within the tool.</p>
-      <h3>Contact</h3>
-      <p>For any privacy-related questions, contact us at <a href="mailto:hello@psychrosuite.com">hello@psychrosuite.com</a>.</p>
-    </div>
-  </div>
-</div>
-
-<!-- Disclaimer -->
-<div class="ov off" id="legal-disclaimer">
-  <div class="lbox">
-    <div class="lbox-hdr">
-      <div class="lbox-title">Disclaimer</div>
-      <button class="lbox-close" onclick="closeLegal('disclaimer')">&#215;</button>
-    </div>
-    <div class="lbox-body">
-      <h3>Engineering Calculations</h3>
-      <p>PsychroFlow provides psychrometric calculations based on the ASHRAE Handbook of Fundamentals. While we have taken care to implement these calculations accurately, the tool is intended as an aid to engineering analysis — not as a replacement for professional engineering judgement.</p>
-      <h3>Verification Required</h3>
-      <p>All results produced by PsychroFlow must be verified by a suitably qualified and registered engineer before being used in:</p>
-      <ul>
-        <li>Design submissions or tender documentation</li>
-        <li>Equipment specifications or procurement</li>
-        <li>Construction drawings or as-built records</li>
-        <li>Any document submitted to a regulatory authority</li>
-        <li>Any application where incorrect values could affect health, safety, or performance</li>
-      </ul>
-      <h3>No Professional Relationship</h3>
-      <p>Use of PsychroFlow does not create a professional engineering relationship between the user and psychrosuite.com. The tool does not constitute engineering advice.</p>
-      <h3>Altitude and Location Data</h3>
-      <p>Atmospheric pressure correction is based on the ICAO standard atmosphere model. Actual site conditions may vary from this model. Users are responsible for verifying site-specific atmospheric pressure data for critical applications.</p>
-      <h3>Accuracy</h3>
-      <p>Psychrometric property calculations are performed using the equations from ASHRAE Handbook of Fundamentals. Results are presented to a precision appropriate for preliminary and detailed HVAC design but should not be assumed to represent the full accuracy of any physical system.</p>
-    </div>
-  </div>
-</div>
-
-<!-- Contact -->
-<div class="ov off" id="legal-contact">
-  <div class="lbox">
-    <div class="lbox-hdr">
-      <div class="lbox-title">Contact Us</div>
-      <button class="lbox-close" onclick="closeLegal('contact')">&#215;</button>
-    </div>
-    <div class="lbox-body">
-      <p>PsychroFlow is developed and maintained by a small team of HVAC engineers. We welcome feedback, bug reports, and feature suggestions.</p>
-      <div class="lbox-contact-grid">
-        <div class="lbox-contact-card">
-          <label>General enquiries</label>
-          <span><a href="mailto:hello@psychrosuite.com">hello@psychrosuite.com</a></span>
-        </div>
-        <div class="lbox-contact-card">
-          <label>Bug reports</label>
-          <span><a href="mailto:bugs@psychrosuite.com">bugs@psychrosuite.com</a></span>
-        </div>
-        <div class="lbox-contact-card">
-          <label>Website</label>
-          <span><a href="https://psychrosuite.com" target="_blank">psychrosuite.com</a></span>
-        </div>
-        <div class="lbox-contact-card">
-          <label>Location</label>
-          <span>Johannesburg, South Africa</span>
-        </div>
-      </div>
-      <h3 style="margin-top:20px">Feedback &amp; Feature Requests</h3>
-      <p>If you have a suggestion for a new process type, a unit system, or any other improvement, we would genuinely like to hear it. PsychroFlow is built for working engineers and your input directly shapes development priorities.</p>
-      <h3>Report a Calculation Error</h3>
-      <p>If you believe a calculation result is incorrect, please include the following in your report: site elevation, atmospheric pressure, starting conditions, process type and target conditions, and the result you expected vs what was shown. Email to <a href="mailto:bugs@psychrosuite.com">bugs@psychrosuite.com</a>.</p>
-    </div>
-  </div>
-</div>
-
-<!-- Changelog -->
-<div class="ov off" id="legal-changelog">
-  <div class="lbox">
-    <div class="lbox-hdr">
-      <div class="lbox-title">Changelog</div>
-      <button class="lbox-close" onclick="closeLegal('changelog')">&#215;</button>
-    </div>
-    <div class="lbox-body">
-      <div class="changelog-entry">
-        <span class="changelog-version">v1.6</span><span class="changelog-date">April 2026</span>
-        <ul class="changelog-items">
-          <li>Full multi-language support: Afrikaans, French, Portuguese, German, Spanish, Italian, Dutch, Arabic, Chinese, Hindi, Swahili</li>
-          <li>Language selection in welcome modal (dropdown)</li>
-          <li>Process type buttons and theory pages now translate with language selection</li>
-          <li>Mobile optimisation: aspect-ratio chart sizing, toolbar repositioned to centre-bottom</li>
-          <li>RH % labels repositioned to right margin — correctly aligned to each curve</li>
-          <li>Enthalpy labels moved outside saturation curve so they are always visible</li>
-          <li>Grid lines darkened for better readability</li>
-          <li>PDF Report button now navigates to Report tab instead of triggering direct export</li>
-          <li>Footer legal pages added (Terms, Privacy, Disclaimer, Contact, Changelog)</li>
-        </ul>
-      </div>
-      <div class="changelog-entry">
-        <span class="changelog-version">v1.5</span><span class="changelog-date">March 2026</span>
-        <ul class="changelog-items">
-          <li>Premium report redesign: ISO drawing-style title block, site conditions panel separate from engineer info</li>
-          <li>High-DPI chart export for PDF (3× resolution rendering)</li>
-          <li>Registration and discipline fields removed from report form</li>
-          <li>Colour theme overhauled: deep slate navigation, teal-green primary accent</li>
-          <li>Process cards redesigned: larger number badges, bolder typography, visible route indicators</li>
-          <li>Sidebar widened to 420px for better process card usability</li>
-          <li>Save App button added to nav — downloads session-embedded HTML file</li>
-        </ul>
-      </div>
-      <div class="changelog-entry">
-        <span class="changelog-version">v1.4</span><span class="changelog-date">February 2026</span>
-        <ul class="changelog-items">
-          <li>Return air mixing process now plots all three state points (OA, RA, mixed) with dashed mixing line</li>
-          <li>Disconnected process start states plotted as labelled S-points on chart</li>
-          <li>Wetbulb calculation bug fixed (sign error causing incorrect WB values)</li>
-          <li>Airflow moved from individual process cards to global site conditions section</li>
-          <li>City quick-load removed — tool is no longer SA-specific</li>
-          <li>P0 now auto-derives from first process start state — no separate Set Conditions step</li>
-          <li>Elevation change now recalculates all process duties without shifting P0</li>
-        </ul>
-      </div>
-      <div class="changelog-entry">
-        <span class="changelog-version">v1.3</span><span class="changelog-date">January 2026</span>
-        <ul class="changelog-items">
-          <li>Theory page rebuilt with full engineering reference content and ASHRAE standards section</li>
-          <li>About section below chart redesigned with property cards and process explanation cards</li>
-          <li>Calculated results tables: right-aligned numbers, colour-coded delta values, unit sub-headers</li>
-          <li>Cooling Coil Performance table removed from on-screen results</li>
-          <li>All temperatures and RH rounded to 1 decimal place in results</li>
-          <li>W-axis and Enthalpy labels repositioned outside chart plot area</li>
-        </ul>
-      </div>
-      <div class="changelog-entry">
-        <span class="changelog-version">v1.2</span><span class="changelog-date">December 2025</span>
-        <ul class="changelog-items">
-          <li>Chart right padding increased to accommodate RH % labels outside plot border</li>
-          <li>Dynamic PAD system: smaller padding on mobile for larger plot area</li>
-          <li>Process name labels suppressed on mobile (chart too small)</li>
-          <li>Enthalpy lines now drawn after saturation curve fill</li>
-          <li>Undo (Ctrl+Z) and session autosave implemented</li>
-          <li>Collapsible process blocks added to sidebar</li>
-        </ul>
-      </div>
-      <div class="changelog-entry">
-        <span class="changelog-version">v1.0</span><span class="changelog-date">November 2025</span>
-        <ul class="changelog-items">
-          <li>Initial release of PsychroFlow</li>
-          <li>Psychrometric chart with RH, WB, and enthalpy layers</li>
-          <li>Process chain: cooling, heating, humidification, evaporative cooling, HRV, return air mixing</li>
-          <li>Altitude correction via ICAO standard atmosphere</li>
-          <li>PDF report generation with engineering title block</li>
-          <li>Session persistence via localStorage</li>
-          <li>Metric SI and Imperial I-P unit systems</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
 </body>
 </html>`;
 
@@ -3562,24 +3322,6 @@ function toggleBlock(id){
   });
 }
 
-function openLegal(key){
-  document.getElementById('legal-'+key)?.classList.remove('off');
-}
-function closeLegal(key){
-  document.getElementById('legal-'+key)?.classList.add('off');
-}
-document.addEventListener('click',function(e){
-  if(e.target.classList.contains('ov')&&e.target.id.startsWith('legal-')){
-    e.target.classList.add('off');
-  }
-});
-document.addEventListener('keydown',function(e){
-  if(e.key==='Escape'){
-    document.querySelectorAll('[id^="legal-"]').forEach(function(el){el.classList.add('off');});
-  }
-});
-
 </script>
-
 </body>
 </html>
