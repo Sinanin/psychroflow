@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ─────────────────────────────────────────────────── */
+* { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* ── Subtle noise — one utility, used sparingly ───────────── */
+.tex::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.018;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ── Fine grid — neutral, not colour-tinted ───────────────── */
+.grid-lines {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* ── Display type — Syne, mixed case, tight ───────────────── */
+.head-xl {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.0;
+}
+.head-lg {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+.head-md {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* ── Eyebrow label — only place we use all-caps ──────────── */
+.eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ── Entrance animations ─────────────────────────────────── */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise { animation: rise 0.65s cubic-bezier(0.16,1,0.3,1) both; }
+.r1 { animation-delay: 0.04s; }
+.r2 { animation-delay: 0.14s; }
+.r3 { animation-delay: 0.24s; }
+.r4 { animation-delay: 0.34s; }
+
+/* ── Hover lift ──────────────────────────────────────────── */
+.lift {
+  transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s ease;
+}
+.lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-block;
+  background: #38BDF8;
+  color: #080E1A;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
+  padding: 0.75rem 1.75rem;
+}
+.btn-primary:hover {
+  background: #0EA5E9;
+  box-shadow: 0 4px 20px rgba(56,189,248,0.3);
+  transform: translateY(-1px);
+}
+
+.btn-ghost-dark {
+  display: inline-block;
+  background: transparent;
+  color: #F1F5F9;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid rgba(241,245,249,0.18);
+  border-radius: 8px;
+  transition: border-color 0.15s, background 0.15s;
+  padding: 0.75rem 1.75rem;
+}
+.btn-ghost-dark:hover {
+  border-color: rgba(241,245,249,0.38);
+  background: rgba(241,245,249,0.05);
+}
+
+.btn-dark {
+  display: inline-block;
+  background: #080E1A;
+  color: #F1F5F9;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.875rem;
+  border-radius: 8px;
+  transition: background 0.15s, transform 0.15s;
+  padding: 0.75rem 1.75rem;
+}
+.btn-dark:hover {
+  background: #111D33;
+  transform: translateY(-1px);
+}
+
+/* ── Live pulse dot ──────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+.live-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+/* ── Divider ─────────────────────────────────────────────── */
+.divider { border-top: 1px solid; }
+
+/* ── Article prose ───────────────────────────────────────── */
+.article-body { font-size: 1.0625rem; line-height: 1.85; color: #3D5068; }
+.article-body p { margin-bottom: 1.4rem; color: #1E2D45; }
+.article-body h2 {
+  font-family: var(--font-display); font-weight: 700; font-size: 1.6rem;
+  color: #0A0F1E; margin: 2.8rem 0 1rem; line-height: 1.15; letter-spacing: -0.02em;
+}
+.article-body h3 {
+  font-family: var(--font-display); font-weight: 600; font-size: 1.2rem;
+  color: #0A0F1E; margin: 2rem 0 0.75rem; letter-spacing: -0.01em;
+}
+.article-body strong { color: #0A0F1E; font-weight: 600; }
+.article-body table { width:100%; border-collapse:collapse; margin:2rem 0; font-size:0.875rem; overflow-x:auto; display:block; }
+.article-body thead { background: #080E1A; }
+.article-body thead th { color:#F1F5F9; font-weight:600; padding:0.75rem 1rem; text-align:left; font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; white-space:nowrap; }
+.article-body tbody tr { border-bottom: 1px solid #EEF1F7; }
+.article-body tbody td { padding:0.75rem 1rem; color:#1E2D45; }
+.article-body tbody tr:nth-child(even) { background:#F8F9FC; }
+.article-body blockquote { border-left:3px solid #38BDF8; margin:2.5rem 0; padding:1rem 1.5rem; background:#F0F9FF; border-radius:0 8px 8px 0; }
+.article-body blockquote p { margin:0; font-size:1.05rem; font-style:italic; line-height:1.7; color:#0A0F1E; }
+.article-body .callout { background:#F8F9FC; border:1px solid #EEF1F7; border-radius:8px; padding:1.25rem 1.5rem; margin:2rem 0; }
+.article-body .callout-danger { background:#FEF2F2; border-color:#FECACA; }
+.article-body .callout-warn { background:#FFFBEB; border-color:#FDE68A; }
+.article-body .callout-label { font-size:0.7rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:#0EA5E9; margin-bottom:0.5rem; font-family:var(--font-body); }
+.article-body .callout-danger .callout-label { color:#DC2626; }
+.article-body .callout-warn .callout-label { color:#D97706; }
+.article-body .callout p { margin:0; font-size:0.9rem; line-height:1.7; color:#1E2D45; }
+.article-body .equation { text-align:center; font-family:monospace; font-size:0.95rem; background:#F8F9FC; border:1px solid #EEF1F7; border-radius:8px; padding:0.75rem 1rem; margin:1.25rem 0; color:#0A0F1E; font-weight:600; }
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: #080E1A; }
+::-webkit-scrollbar-thumb { background: #1E3050; border-radius: 2px; }
