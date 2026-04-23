@@ -1,9 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/templates/page": "app/templates/page.js",
-  "/articles/page": "app/articles/page.js",
-  "/apps/psychroflow/page": "app/apps/psychroflow/page.js",
-  "/login/page": "app/login/page.js",
-  "/privacy/page": "app/privacy/page.js",
-  "/contact/page": "app/contact/page.js"
-}
