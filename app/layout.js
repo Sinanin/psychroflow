@@ -25,6 +25,9 @@ export const metadata = {
   },
   description: 'Professional psychrometric analysis tools, engineering document templates, and technical knowledge for HVAC engineers worldwide.',
   keywords: ['psychrometric chart', 'HVAC engineering tools', 'psychrometric analysis', 'HVAC design templates', 'BSL-3 lab design', 'duct sizing'],
+  verification: {
+    google: '<meta name="google-site-verification" content="R9pYnnaHzlqow_TTPT_V6yqD9jV7FUdHPKgzDHpgR8w" />',
+},
   authors: [{ name: 'PsychroStudio' }],
   creator: 'PsychroStudio',
   publisher: 'PsychroStudio',
