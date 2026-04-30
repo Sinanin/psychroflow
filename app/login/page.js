@@ -1,13 +1,13 @@
+import { MONETISATION_ENABLED } from '@/lib/config'
+import { notFound } from 'next/navigation'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
 
-export const metadata = {
-  title: 'Log In — PsychroStudio',
-  description: 'Sign in to your PsychroStudio account.',
-}
+export const metadata = { title: 'Log In — PsychroStudio' }
 
 export default function LoginPage() {
+  if (!MONETISATION_ENABLED) notFound()
   return (
     <div className="min-h-screen bg-night flex flex-col">
       <Navbar />
@@ -25,24 +25,20 @@ export default function LoginPage() {
               <span className="font-body text-sky text-xs font-semibold">Authentication launching soon</span>
             </div>
           </div>
-
           <div className="bg-night2 rounded-xl border border-rim p-8 text-center">
             <p className="font-body text-snow2 text-sm leading-relaxed mb-6">
-              Account management is being set up. For now, PsychroFlow is fully free to use
-              with no account required.
+              Account management is being set up. PsychroFlow is fully free with no account required.
             </p>
             <div className="space-y-3">
               <a href="/psychroflow.html" target="_blank" rel="noopener noreferrer"
                  className="btn-primary w-full text-center block">
                 Launch PsychroFlow Free →
               </a>
-              <Link href="/contact"
-                className="btn-ghost-dark w-full text-center block">
+              <Link href="/contact" className="btn-ghost-dark w-full text-center block">
                 Get notified when accounts launch
               </Link>
             </div>
           </div>
-
           <p className="font-body text-snow3 text-xs text-center mt-6">
             <Link href="/" className="hover:text-snow2 transition-colors">← Back to home</Link>
           </p>

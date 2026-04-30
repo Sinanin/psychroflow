@@ -1,4 +1,5 @@
 import { articles } from '@/lib/articles'
+import { MONETISATION_ENABLED } from '@/lib/config'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
@@ -130,9 +131,11 @@ export default function Home() {
                    className="btn-primary">
                   Launch PsychroFlow Free →
                 </a>
-                <Link href="/templates" className="btn-ghost-dark">
-                  Browse Templates
-                </Link>
+                {MONETISATION_ENABLED && (
+                  <Link href="/templates" className="btn-ghost-dark">
+                    Browse Templates
+                  </Link>
+                )}
               </div>
 
               {/* Stats — clean, no border gimmicks */}
@@ -505,9 +508,11 @@ export default function Home() {
                className="btn-primary !px-8 !py-4 !text-base">
               Try PsychroFlow Free →
             </a>
-            <Link href="/pricing" className="btn-ghost-dark !px-8 !py-4 !text-base">
-              View Plans
-            </Link>
+            {MONETISATION_ENABLED && (
+              <Link href="/pricing" className="btn-ghost-dark !px-8 !py-4 !text-base">
+                View Plans
+              </Link>
+            )}
           </div>
         </div>
       </section>
