@@ -1,5 +1,4 @@
 import { articles } from '@/lib/articles'
-import { MONETISATION_ENABLED } from '@/lib/config'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
@@ -131,11 +130,7 @@ export default function Home() {
                    className="btn-primary">
                   Launch PsychroFlow Free →
                 </a>
-                {MONETISATION_ENABLED && (
-                  <Link href="/templates" className="btn-ghost-dark">
-                    Browse Templates
-                  </Link>
-                )}
+
               </div>
 
               {/* Stats — clean, no border gimmicks */}
@@ -405,57 +400,26 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ══ PRICING TEASER — dark ═══════════════════════════ */}
-      <section id="pricing" className="tex relative bg-night py-24 px-6">
+      {/* ══ COMING SOON ══════════════════════════════════ */}
+      <section className="tex relative bg-night py-24 px-6">
         <div className="grid-lines absolute inset-0 opacity-50"/>
-        <div className="relative z-10 max-w-5xl mx-auto">
-          <div className="mb-14">
-            <p className="eyebrow text-snow3 mb-3">Pricing</p>
-            <h2 className="head-xl text-snow" style={{ fontSize: 'clamp(2.4rem, 4.5vw, 3.8rem)' }}>
-              Pay for what<br/>you use
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4 mb-10">
-            {[
-              { label: 'PsychroFlow Pro', price: 'R149', period: '/mo', desc: 'Full app, PDF export, project saving', href: '/pricing' },
-              { label: 'Studio Bundle',   price: 'R349', period: '/mo', desc: 'All apps + full template library',     href: '/pricing', featured: true },
-              { label: 'Templates Pro',   price: 'R179', period: '/mo', desc: '20+ editable engineering documents',   href: '/pricing' },
-            ].map(p => (
-              <Link key={p.label} href={p.href}
-                className={`lift group flex flex-col rounded-xl p-6 border transition-colors ${
-                  p.featured
-                    ? 'bg-night2 border-sky/40'
-                    : 'bg-night2 border-rim hover:border-rim2'
-                }`}>
-                {p.featured && (
-                  <p className="eyebrow text-sky mb-3">Most Popular</p>
-                )}
-                <h3 className="head-md text-snow text-lg mb-2">{p.label}</h3>
-                <p className="font-body text-snow3 text-xs leading-relaxed mb-5 flex-1 font-light">{p.desc}</p>
-                <div className="flex items-baseline gap-1 mb-4">
-                  <span className="head-md text-snow text-3xl">{p.price}</span>
-                  <span className="font-body text-snow3 text-sm">{p.period}</span>
-                </div>
-                <div className={`py-2.5 rounded-lg text-center text-sm font-body font-semibold transition-colors ${
-                  p.featured
-                    ? 'bg-sky text-night group-hover:bg-skyD'
-                    : 'bg-night3 text-snow border border-rim group-hover:border-rim2'
-                }`}>
-                  Get Started →
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link href="/pricing"
-              className="font-body text-snow2 text-sm hover:text-snow transition-colors">
-              View all plans, bundles & annual options →
-            </Link>
-          </div>
+        <div className="relative z-10 max-w-3xl mx-auto text-center">
+          <p className="eyebrow text-sky mb-4">Coming Soon</p>
+          <h2 className="head-xl text-snow mb-5" style={{ fontSize: 'clamp(2.4rem, 4.5vw, 3.8rem)' }}>
+            Premium plans<br/>in development
+          </h2>
+          <p className="font-body text-snow2 text-lg leading-relaxed mb-10 font-light max-w-xl mx-auto">
+            PsychroFlow is completely free while we build the full platform.
+            Register your interest to be first in line when Pro plans launch —
+            early subscribers get a founding member discount.
+          </p>
+          <Link href="/contact" className="btn-primary !px-8 !py-4 !text-base">
+            Register Interest →
+          </Link>
+          <p className="font-body text-snow3 text-xs mt-5">No spam. One email when Pro launches.</p>
         </div>
       </section>
+
 
       {/* ══ FAQ — light ══════════════════════════════════════ */}
       <section className="bg-surface py-20 px-6">
@@ -508,11 +472,7 @@ export default function Home() {
                className="btn-primary !px-8 !py-4 !text-base">
               Try PsychroFlow Free →
             </a>
-            {MONETISATION_ENABLED && (
-              <Link href="/pricing" className="btn-ghost-dark !px-8 !py-4 !text-base">
-                View Plans
-              </Link>
-            )}
+
           </div>
         </div>
       </section>
