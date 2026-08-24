@@ -41,10 +41,6 @@ prefer small, self-contained, reviewable changes over large refactors.
 - Colours live in `tailwind.config.js` under `theme.extend.colors`.
   Use the named tokens (`night`, `night1`, `rim`, `snow`, `ink`, etc.),
   never raw hex in components.
-- KNOWN ISSUE: the accent palette in `tailwind.config.js` is sky blue
-  (`sky: '#38BDF8'`). Some components may reference an electric green
-  (`#00FF87`). These are inconsistent. Confirm with me which is authoritative
-  before changing either.
 
 ## Known outstanding work
 - `app/page.js` (homepage) — needs to be built out with substantial supporting
