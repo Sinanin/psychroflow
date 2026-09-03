@@ -833,7 +833,7 @@ footer .footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap
       <button class="nb nb-g" onclick="showTab('howto')">&#128161; How to Use</button>
       <button class="nb nb-g" onclick="showTab('settings')">&#9881; Settings</button>
       <button class="nb nb-g" onclick="clearAll()">Clear All</button>
-      <button class="nb nb-p" onclick="exportPDF()">&#8595; PDF Report</button>
+      <button class="nb nb-p" onclick="showTab('report')">&#128196; PDF Report</button>
     </div>
   </div>
   <div class="tabs">
@@ -1622,8 +1622,8 @@ function applyLang(){
   if(setBtn)setBtn.innerHTML='&#9881; '+t('settings');
   const clrBtn=document.querySelector('.nb-g[onclick*="clearAll"]');
   if(clrBtn)clrBtn.textContent=t('clear_all');
-  const pdfBtn=document.querySelector('.nb-p[onclick*="exportPDF"]');
-  if(pdfBtn)pdfBtn.innerHTML='&#8595; '+t('pdf_report');
+  const pdfBtn=document.querySelector('.nb-p[onclick*="showTab"]');
+  if(pdfBtn)pdfBtn.innerHTML='&#128196; '+t('pdf_report');
 
   // Tabs
   const tabChart=document.getElementById('tab-chart');
@@ -1709,9 +1709,6 @@ function applyLang(){
       const isDefaultTitle=Object.values(LANGS).some(l=>ttl.textContent.startsWith(l.process+' '));
       if(isDefaultTitle)ttl.textContent=t('process')+' '+(i+1);
     }
-    const calcBtn=b.querySelector('[id$="-calc"]');
-    if(calcBtn&&!calcBtn.style.display.includes('none'))
-      calcBtn.textContent=t('calculate');
     const sdivs=b.querySelectorAll('.sdiv');
     sdivs.forEach(s=>{
       const isProcessType=Object.values(LANGS).some(l=>s.textContent===l.select_type||s.textContent==='Process Type'||s.textContent==='Prozesstyp'||s.textContent==='Type de processus');
@@ -1939,7 +1936,6 @@ function buildBlockHTML(id,n,dDB,dRH,hasLast){
           </button>`).join('')}
       </div>
       <div id="${id}-params" style="display:none"></div>
-      <button class="btn btn-p btn-f" id="${id}-calc" onclick="calcBlock('${id}')" style="display:none">Calculate →</button>
     </div>`;
 }
 
@@ -1982,18 +1978,18 @@ function renumBlocks(){
 }
 
 function selPType(id,type){
+  pushUndo();
   document.querySelectorAll(`#${id}-tg .pt-btn`).forEach(b=>b.classList.remove('on'));
   document.getElementById(`${id}-t-${type}`)?.classList.add('on');
   const pp=document.getElementById(`${id}-params`);
   pp.style.display='block';
   pp.innerHTML=buildParams(id,type);
-  document.getElementById(`${id}-calc`).style.display='flex';
-  document.getElementById(`${id}-calc`).style.background=PCOLS[type];
   document.getElementById(`${id}-ttl`).textContent=`${PICS[type]} ${PNAMES[type]}`;
   document.getElementById(`${id}-ttl`).style.color=PCOLS[type];
   document.getElementById(`${id}-sub`).textContent='Enter parameters below';
   const ex=procs.find(p=>p.blockId===id);
   if(ex)ex.type=type;else procs.push({blockId:id,type,startState:null,endState:null});
+  runAuto(id);  // auto-calculate immediately with default parameters
 }
 
 function buildParams(id,type){
@@ -2042,17 +2038,19 @@ function buildParams(id,type){
 function calcBlock(id, silent=false){
   if(!silent) pushUndo();
   const proc=procs.find(p=>p.blockId===id);
-  if(!proc){showToast('Select a process type first');return;}
+  if(!proc){if(!silent)showToast('Select a process type first');return;}
   const sDB=parseFloat(document.getElementById(`${id}-db`).value);
   const p2t=document.getElementById(`${id}-pt`).value;
   const p2v=parseFloat(document.getElementById(`${id}-pv`).value);
   const flowVal=parseFloat(document.getElementById('sysFlow')?.value)||1;
   let startW;
-  if(p2t==='rh')startW=wFromRH(sDB,p2v);
-  else if(p2t==='wb')startW=wFromWB(sDB,p2v);
-  else if(p2t==='hr')startW=p2v/1000;
-  else if(p2t==='dp')startW=wFromDP(p2v);
-  if(isNaN(startW)||startW<0||startW>wFromRH(sDB,100)){showToast('Invalid starting conditions');return;}
+  try{
+    if(p2t==='rh')startW=wFromRH(sDB,p2v);
+    else if(p2t==='wb')startW=wFromWB(sDB,p2v);
+    else if(p2t==='hr')startW=p2v/1000;
+    else if(p2t==='dp')startW=wFromDP(p2v);
+    if(isNaN(startW)||startW<0||startW>wFromRH(sDB,100))throw 0;
+  }catch(e){if(!silent)showToast('Invalid starting conditions');return;}
   const startState=calcState(sDB,startW);
   const type=proc.type;
   let endState=null,pd={};
@@ -2099,8 +2097,8 @@ function calcBlock(id, silent=false){
       endState=calcState((mH-2501*mW)/(1.006+1.86*mW),mW);
       pd={raState,oaF};
     }
-  }catch(e){showToast('Calculation error');return;}
-  if(!endState){showToast('Calculation failed — check inputs');return;}
+  }catch(e){if(!silent)showToast('Calculation error');return;}
+  if(!endState){if(!silent)showToast('Calculation failed — check inputs');return;}
   // P0 always mirrors the first process's start state
   const allBlocks=[...document.querySelectorAll('.proc-block')];
   const isFirst=allBlocks.length>0&&allBlocks[0].id===id;
@@ -2123,6 +2121,28 @@ function calcBlock(id, silent=false){
   const stripEl=document.getElementById(`${id}-strip`);
   if(stripEl)stripEl.style.background=PCOLS[type];
   if(!silent){redraw();updateResults();updateProcCount();saveSession();showToast(`${PNAMES[type]} — ${qT.toFixed(1)} kW`);}
+}
+
+// ── Auto-calculate ──────────────────────────────────────────
+// Blocks recalculate on any input change (debounced) instead of via a button.
+// calcBlock(id,true) is silent: it updates proc data with no toast/undo/refresh,
+// and leaves the last good result untouched if the current inputs are invalid.
+const autoTimers={};
+function runAuto(id){
+  calcBlock(id,true);
+  redraw();updateResults();updateProcCount();saveSession();
+}
+function scheduleAuto(id){
+  const proc=procs.find(p=>p.blockId===id);
+  if(!proc||!proc.type)return;          // no process type chosen yet — nothing to calc
+  if(!autoTimers[id])pushUndo();        // one undo checkpoint per burst of edits
+  clearTimeout(autoTimers[id]);
+  autoTimers[id]=setTimeout(()=>{delete autoTimers[id];runAuto(id);},350);
+}
+function onProcInput(e){
+  if(!e.target.matches('input[type=number],select'))return;  // ignore the free-text description field
+  const block=e.target.closest('.proc-block');
+  if(block)scheduleAuto(block.id);
 }
 
 // ════════════════════════════════════════════════════════════
@@ -3264,6 +3284,11 @@ window.addEventListener('resize',()=>resizeCanvas());
 document.addEventListener('DOMContentLoaded',()=>{
   resizeCanvas();
   initChartEvents();
+  // Delegated auto-calc: one listener on the stable #procBlocks container survives
+  // selPType re-rendering params and the Ctrl+Z innerHTML restore.
+  const pbc=document.getElementById('procBlocks');
+  pbc.addEventListener('input',onProcInput);
+  pbc.addEventListener('change',onProcInput);
   const restored=restoreSession();
   if(restored){document.getElementById('wm').classList.add('off');}
   // Always ensure first process block exists after load (whether restored or fresh)
