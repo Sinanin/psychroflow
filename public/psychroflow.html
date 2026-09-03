@@ -1314,6 +1314,11 @@ footer .footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap
 </footer><script src="/psychrolib.js"></script><script>
 'use strict';
 
+// Configure PsychroLib once, before any handler can call the psychrometric
+// wrappers below. psychrolib.js is loaded synchronously by the tag above, so the
+// global is guaranteed to exist here.
+psychrolib.SetUnitSystem(psychrolib.SI);
+
 // ════════════════════════════════════════════════════════════
 // UNIT SYSTEM
 // ════════════════════════════════════════════════════════════
@@ -1728,20 +1733,23 @@ function getFlowKgS(v,T){
 // PSYCHROMETRIC ENGINE — ASHRAE
 // ════════════════════════════════════════════════════════════
 function getP(){return parseFloat(document.getElementById('atmP')?.value||101.3);}
+// PsychroLib SI works in Pa; this tool stores pressure in kPa.
+function getPa(){return getP()*1000;}
 
-function satPws(T){
-  if(T>=0){const K=T+273.15;return Math.exp(-5.8002206e3/K+1.3914993-4.8640239e-2*K+4.1764768e-5*K*K-1.4452093e-8*K*K*K+6.5459673*Math.log(K))/1000;}
-  const K=T+273.15;return Math.exp(-5.6745359e3/K+6.3925247-9.677843e-3*K+6.2215701e-7*K*K+2.0747825e-9*K*K*K-9.484024e-13*K*K*K*K+4.1635019*Math.log(K))/1000;
-}
-function wFromRH(T,RH){const P=getP(),Pws=satPws(T);return 0.621945*(RH/100*Pws)/(P-RH/100*Pws);}
-function wFromWB(T,WB){const P=getP(),Pws_wb=satPws(WB),W_wb=0.621945*Pws_wb/(P-Pws_wb);return((2501-2.381*WB)*W_wb-1.006*(T-WB))/(2501+1.86*T-4.186*WB);}
-function wFromDP(dp){const P=getP(),Pws=satPws(dp);return 0.621945*Pws/(P-Pws);}
-function rhFromW(T,W){const P=getP(),Pws=satPws(T),Pw=W*P/(0.621945+W);return Math.min(100,Math.max(0,Pw/Pws*100));}
-function enth(T,W){return 1.006*T+W*(2501+1.86*T);}
-function sVol(T,W){return 0.287042*(T+273.15)*(1+1.6078*W)/getP();}
-function vPres(W){return W*getP()/(0.621945+W);}
-function dewPt(T,RH){if(RH<=0)return-99;const a=17.27,b=237.3,al=a*T/(b+T)+Math.log(RH/100);return b*al/(a-al);}
-function wetBulb(T,W){let wb=T*(0.4+0.6*Math.min(1,Math.max(0,W*50)));for(let i=0;i<400;i++){const d=wFromWB(T,wb)-W;if(Math.abs(d)<1e-8)break;wb-=d*35;if(wb>T)wb=T-0.001;if(wb<-99){wb=-99;break;}}return wb;}
+// These wrappers now delegate to PsychroLib (see /psychrolib.js). Names, argument
+// lists and return units (kPa, kJ/kg, °C, m³/kg, %) are unchanged so the ~40 call
+// sites across the process logic and chart rendering keep working untouched.
+// psychrolib.SetUnitSystem(psychrolib.SI) is called once at the top of this script.
+function satPws(T){return psychrolib.GetSatVapPres(T)/1000;}
+function wFromRH(T,RH){const rh=Math.min(100,Math.max(0,RH));return psychrolib.GetHumRatioFromRelHum(T,rh/100,getPa());}
+function wFromWB(T,WB){try{return psychrolib.GetHumRatioFromTWetBulb(T,WB,getPa());}catch(e){return -1;}}
+function wFromDP(dp){return psychrolib.GetHumRatioFromTDewPoint(dp,getPa());}
+function rhFromW(T,W){return Math.min(100,Math.max(0,psychrolib.GetRelHumFromHumRatio(T,W,getPa())*100));}
+function enth(T,W){return psychrolib.GetMoistAirEnthalpy(T,W)/1000;}
+function sVol(T,W){return psychrolib.GetMoistAirVolume(T,W,getPa());}
+function vPres(W){return psychrolib.GetVapPresFromHumRatio(W,getPa())/1000;}
+function dewPt(T,RH){if(RH<=0)return-99;try{return psychrolib.GetTDewPointFromRelHum(T,RH/100);}catch(e){return-99;}}
+function wetBulb(T,W){try{return psychrolib.GetTWetBulbFromHumRatio(T,W,getPa());}catch(e){return T;}}
 function calcState(T,W){const RH=rhFromW(T,W),h=enth(T,W),v=sVol(T,W),pv=vPres(W),dp=dewPt(T,RH),wb=wetBulb(T,W);return{T,W,RH,h,v,pv,dp,wb};}
 
 // SA Cities
