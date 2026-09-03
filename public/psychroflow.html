@@ -922,6 +922,18 @@ footer .footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap
             </table>
           </div>
         </div>
+        <div class="res-wrap" id="adpSection" style="display:none">
+          <div class="res-wrap-title">APPARATUS DEW POINT &amp; COIL PERFORMANCE</div>
+          <div style="overflow-x:auto">
+            <table class="res-tbl" id="adpTable">
+              <thead><tr>
+                <th>Process</th><th>ADP (&#176;C)</th>
+                <th>Bypass Factor</th><th>Contact Factor</th><th>Assessment</th>
+              </tr></thead>
+              <tbody id="adpTbody"></tbody>
+            </table>
+          </div>
+        </div>
 
       </div>
 
@@ -2199,11 +2211,17 @@ function saveAppFile(){
   showToast('App saved — open the downloaded file to restore this session');
 }
 function clearAll(){
+  if(!confirm('Clear all processes and reset site conditions (elevation, pressure, airflow) to defaults?\n\nThis cannot be undone.'))return;
   pushUndo();p0=null;procs=[];
   document.getElementById('p0result').innerHTML='';
   document.getElementById('procBlocks').innerHTML='<div style="font-size:10px;color:var(--mu2);text-align:center;padding:12px 0">Add your first process below</div>';
   document.getElementById('addProcBtn').style.display='flex';
   document.getElementById('chartEmpty').style.display='none';
+  document.getElementById('adpSection').style.display='none';
+  // Reset site conditions to defaults (elevation drives pressure via updateAtmP)
+  document.getElementById('elevation').value=0;
+  document.getElementById('sysFlow').value='1.0';
+  updateAtmP();
   blockCount=0;updateResults();updateProcCount();redraw();saveSession();
   showToast('Cleared');
 }
