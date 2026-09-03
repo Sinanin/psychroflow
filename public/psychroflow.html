@@ -385,6 +385,8 @@ input,select{width:100%;height:30px;padding:0 9px;background:var(--white);
              font-family:var(--sans);font-size:13px;color:var(--ink);
              outline:none;transition:border-color 0.15s,box-shadow 0.15s;}
 input:focus,select:focus{border-color:var(--pr);box-shadow:0 0 0 3px var(--pp);}
+input[readonly]{background:var(--s2);color:var(--mu);cursor:default;}
+input[readonly]:focus{border-color:var(--brd);box-shadow:none;}
 select{cursor:pointer;}
 .iu{display:flex;}
 .iu input{border-right:none;border-radius:6px 0 0 6px;}
@@ -928,7 +930,7 @@ footer .footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap
             <table class="res-tbl" id="adpTable">
               <thead><tr>
                 <th>Process</th><th>ADP (&#176;C)</th>
-                <th>Bypass Factor</th><th>Contact Factor</th><th>Assessment</th>
+                <th>Bypass Factor</th><th>Contact Factor</th>
               </tr></thead>
               <tbody id="adpTbody"></tbody>
             </table>
@@ -949,17 +951,17 @@ footer .footer-links{display:flex;justify-content:center;gap:20px;flex-wrap:wrap
       <!-- Site conditions + airflow merged -->
       <div class="sb-sec">
         <div class="sb-sec-title">Site Conditions</div>
-        <div class="r2">
-          <div class="fg"><label class="fl">Elevation (m)</label><input type="number" id="elevation" value="0" step="10" onchange="updateAtmP()"></div>
-          <div class="fg"><label class="fl">Pressure (kPa)</label>
-            <div class="iu"><input type="number" id="atmP" value="101.3" step="0.1" onchange="recalcAll()"><span class="utag">kPa</span></div>
-          </div>
-        </div>
-        <div class="fg" style="margin-top:6px">
+        <div class="fg">
           <label class="fl">System Airflow</label>
           <div class="iu">
             <input type="number" id="sysFlow" value="1.0" step="0.1" min="0.01" onchange="recalcFlow()">
             <span class="utog" id="flowUnitBtn" onclick="toggleFlowUnit()">m&#179;/s</span>
+          </div>
+        </div>
+        <div class="r2">
+          <div class="fg"><label class="fl">Elevation (m)</label><input type="number" id="elevation" value="0" step="10" onchange="updateAtmP()"></div>
+          <div class="fg"><label class="fl">Pressure (kPa)</label>
+            <div class="iu"><input type="number" id="atmP" value="101.3" step="0.1" readonly tabindex="-1"><span class="utag">kPa</span></div>
           </div>
         </div>
         <input type="hidden" id="p0db" value="0">
@@ -2179,7 +2181,6 @@ function updateResults(){
         <td><strong>${p.pd.adpT.toFixed(2)}</strong></td>
         <td>${(p.pd.BF*100).toFixed(1)}%</td>
         <td>${(p.pd.CF*100).toFixed(1)}%</td>
-        <td style="font-size:10px;color:var(--mu)">${p.pd.BF>0.25?'⚠ High BF — consider more coil rows or reduced face velocity':p.pd.BF<0.05?'✓ Excellent coil contact efficiency':'✔ Acceptable'}</td>
       </tr>`).join('');
   }else{adpSec.style.display='none';}
 
