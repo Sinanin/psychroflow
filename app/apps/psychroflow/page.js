@@ -1,6 +1,7 @@
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import Link from 'next/link'
+import { MONETISATION_ENABLED } from '@/lib/config'
 
 export const metadata = {
   title: 'PsychroFlow — Psychrometric Analysis Tool | PsychroStudio',
@@ -96,22 +97,24 @@ export default function PsychroFlowPage() {
             ))}
           </div>
 
-          {/* Pro upsell */}
-          <div className="mt-10 p-6 rounded-xl border border-sky/30 bg-sky/5">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <div className="font-semibold text-ink mb-1">Upgrade to Pro</div>
-                <p className="text-slate text-sm">Get full access to the template library, future apps, and priority support.</p>
+          {/* Pro upsell — only shown when monetisation is enabled */}
+          {MONETISATION_ENABLED && (
+            <div className="mt-10 p-6 rounded-xl border border-sky/30 bg-sky/5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <div className="font-semibold text-ink mb-1">Upgrade to Pro</div>
+                  <p className="text-slate text-sm">Get full access to the template library, future apps, and priority support.</p>
+                </div>
+                <Link
+                  href="/login"
+                  className="flex-shrink-0 px-5 py-2.5 bg-sky hover:bg-skyD text-night
+                             text-sm font-semibold rounded-lg transition-colors duration-150 text-center"
+                >
+                  View Plans →
+                </Link>
               </div>
-              <Link
-                href="/login"
-                className="flex-shrink-0 px-5 py-2.5 bg-sky hover:bg-skyD text-night
-                           text-sm font-semibold rounded-lg transition-colors duration-150 text-center"
-              >
-                View Plans →
-              </Link>
             </div>
-          </div>
+          )}
         </div>
       </main>
 
