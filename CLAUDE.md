@@ -55,7 +55,8 @@ prefer small, self-contained, reviewable changes over large refactors.
 ## Content
 - Articles are defined in `articles.js`.
 - Contact email is `hello@psychrostudio.com` (Zoho).
-- Analytics: Google Search Console, GA4, Microsoft Clarity.
+- Analytics: Google Search Console (verification tag) and Microsoft Clarity
+  (inline script in `app/layout.js`). GA4 is not installed.
 
 ## Deployment
 - I commit and push via GitHub Desktop.
