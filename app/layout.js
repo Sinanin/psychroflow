@@ -78,12 +78,6 @@ const jsonLd = {
   description: 'Professional psychrometric analysis tools and engineering document templates for HVAC professionals.',
   applicationCategory: 'EngineeringApplication',
   operatingSystem: 'Web',
-  offers: {
-    '@type': 'Offer',
-    price: '149',
-    priceCurrency: 'ZAR',
-    priceValidUntil: '2027-12-31',
-  },
   provider: {
     '@type': 'Organization',
     name: 'PsychroStudio',
