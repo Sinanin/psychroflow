@@ -44,19 +44,19 @@ export default function PsychroFlowPage() {
         <div className="max-w-4xl mx-auto">
 
           {/* Breadcrumb */}
-          <Link href="/" className="text-teal-primary text-sm font-medium hover:underline mb-8 block">
+          <Link href="/" className="text-skyD text-sm font-medium hover:underline mb-8 block">
             ← Back to PsychroStudio
           </Link>
 
           {/* Header */}
           <div className="mb-14">
             <div className="flex items-center gap-3 mb-5">
-              <span className="px-3 py-1 bg-teal-primary/10 text-teal-primary text-xs font-bold rounded-full uppercase tracking-wide">
+              <span className="px-3 py-1 bg-sky/10 text-sky text-xs font-bold rounded-full uppercase tracking-wide">
                 Live
               </span>
               <span className="text-slate text-sm">Free to use · No account required</span>
             </div>
-            <h1 className="head-md text-5xl md:text-6xl font-bold text-teal-deeper mb-5">
+            <h1 className="head-md text-5xl md:text-6xl font-bold text-ink mb-5">
               PsychroFlow
             </h1>
             <p className="text-slate text-xl leading-relaxed max-w-2xl">
@@ -76,8 +76,8 @@ export default function PsychroFlowPage() {
                 href="/psychroflow.html"
                    target="_blank"
                    rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-teal-primary hover:bg-teal-dark
-                           text-white font-semibold rounded-xl transition-all duration-200 hover:-translate-y-0.5 text-lg"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-sky hover:bg-skyD
+                           text-night font-semibold rounded-xl transition-all duration-200 hover:-translate-y-0.5 text-lg"
               >
                 Launch PsychroFlow →
               </a>
@@ -85,27 +85,27 @@ export default function PsychroFlowPage() {
           </div>
 
           {/* Features grid */}
-          <h2 className="head-md text-2xl font-bold text-teal-deeper mb-6">What&apos;s included</h2>
+          <h2 className="head-md text-2xl font-bold text-ink mb-6">What&apos;s included</h2>
           <div className="grid md:grid-cols-2 gap-4">
             {features.map(f => (
               <div key={f.title} className="p-6 rounded-xl border border-surface1 bg-white">
-                <div className="w-2 h-2 rounded-full bg-teal-primary mb-3" />
-                <h3 className="font-semibold text-teal-deeper mb-2 text-sm">{f.title}</h3>
+                <div className="w-2 h-2 rounded-full bg-sky mb-3" />
+                <h3 className="font-semibold text-ink mb-2 text-sm">{f.title}</h3>
                 <p className="text-slate text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
 
           {/* Pro upsell */}
-          <div className="mt-10 p-6 rounded-xl border border-teal-primary/30 bg-teal-primary/5">
+          <div className="mt-10 p-6 rounded-xl border border-sky/30 bg-sky/5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <div className="font-semibold text-teal-deeper mb-1">Upgrade to Pro</div>
+                <div className="font-semibold text-ink mb-1">Upgrade to Pro</div>
                 <p className="text-slate text-sm">Get full access to the template library, future apps, and priority support.</p>
               </div>
               <Link
                 href="/login"
-                className="flex-shrink-0 px-5 py-2.5 bg-teal-primary hover:bg-teal-dark text-white
+                className="flex-shrink-0 px-5 py-2.5 bg-sky hover:bg-skyD text-night
                            text-sm font-semibold rounded-lg transition-colors duration-150 text-center"
               >
                 View Plans →
